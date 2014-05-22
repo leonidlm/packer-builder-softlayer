@@ -1,0 +1,40 @@
+{
+  "parameters":[
+    {
+      "hostname": "{{.HostName}}",
+      "domain": "{{.Domain}}",
+      "datacenter": { 
+        "name": "{{.Datacenter}}" 
+      },
+      "startCpus": {{.Cpus}},
+      "maxMemory": {{.Memory}},
+      "hourlyBillingFlag": true, 
+      "localDiskFlag": false,
+      "networkComponents": [
+        {
+          "maxSpeed": {{.NetworkSpeed}}
+        }
+      ],
+      {{if .BaseImageId}}
+      "blockDeviceTemplateGroup": { 
+        "globalIdentifier": "{{.BaseImageId}}" 
+      },
+      {{else}}
+      "operatingSystemReferenceCode": "{{.BaseOsCode}}",
+      {{end}}
+      "blockDevices": [
+        {
+          "device": "0",
+          "diskImage": {
+            "capacity": {{.DiskCapacity}}
+          }
+        }
+      ],
+      "sshKeys": [
+        {
+          "id": {{.ProvisioningSshKeyId}}
+        }
+      ]
+    }
+  ]
+}
