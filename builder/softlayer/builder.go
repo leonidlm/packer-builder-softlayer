@@ -212,7 +212,6 @@ func (self *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (pa
 		},
 		new(common.StepProvision),
 		new(stepCaptureImage),
-		new(stepShutdown),
 	}
 
 	// Create the runner which will run the steps we just build
@@ -221,7 +220,10 @@ func (self *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (pa
 
 	// Create an artifact and return it
 	artifact := &Artifact{
-		imageName: "test",
+		imageName:      self.config.ImageName,
+		imageId:        state.Get("image_id").(string),
+		datacenterName: self.config.DatacenterName,
+		client:         client,
 	}
 
 	return artifact, nil

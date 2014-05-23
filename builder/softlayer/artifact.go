@@ -1,38 +1,41 @@
 package softlayer
 
 import (
-  "fmt"
-  "errors"
+	"fmt"
+	"log"
 )
 
 // Artifact represents a Softlayer image as the result of a Packer build.
 type Artifact struct {
-  imageName string
+	imageName      string
+	imageId        string
+	datacenterName string
+	client         *SoftlayerClient
 }
 
 // BuilderId returns the builder Id.
 func (*Artifact) BuilderId() string {
-  return BuilderId
+	return BuilderId
 }
 
 // Destroy destroys the Softlayer image represented by the artifact.
-func (a *Artifact) Destroy() error {
-  fmt.Println("Destroying image: %s", a.imageName)
-  e := errors.New("error happened now!")
-  return e
+func (self *Artifact) Destroy() error {
+	log.Printf("Destroying image: %s", self.String())
+	err := self.client.destroyImage(self.imageId, self.datacenterName)
+	return err
 }
 
 // Files returns the files represented by the artifact.
 func (*Artifact) Files() []string {
-  return nil
+	return nil
 }
 
-// Id returns the Softlayer image name.
-func (a *Artifact) Id() string {
-  return a.imageName
+// Id returns the Softlayer image ID.
+func (self *Artifact) Id() string {
+	return self.imageId
 }
 
 // String returns the string representation of the artifact.
-func (a *Artifact) String() string {
-  return fmt.Sprintf("A disk image was created: %v", a.imageName)
+func (self *Artifact) String() string {
+	return fmt.Sprintf("%s::%s (%s)", self.datacenterName, self.imageId, self.imageName)
 }

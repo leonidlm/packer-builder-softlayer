@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/common/uuid"
 	"github.com/mitchellh/packer/packer"
+	"log"
 	"strings"
 )
 
@@ -52,5 +53,19 @@ func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction
 }
 
 func (self *stepCreateSshKey) Cleanup(state multistep.StateBag) {
-	// use the self.keyId to cleanup the temporary ssh key
+	// If no key name is set, then we never created it, so just return
+	if self.keyId == 0 {
+		return
+	}
+
+	client := state.Get("client").(*SoftlayerClient)
+	ui := state.Get("ui").(packer.Ui)
+
+	ui.Say("Deleting temporary ssh key...")
+	err := client.DestroySshKey(self.keyId)
+
+	if err != nil {
+		log.Printf("Error cleaning up ssh key: %v", err.Error())
+		ui.Error(fmt.Sprintf("Error cleaning up ssh key. Please delete the key (%i) manually", self.keyId))
+	}
 }

@@ -26,6 +26,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 	}
 
 	imageId := data["globalIdentifier"]
+	state.Put("image_id", imageId)
 	ui.Say(fmt.Sprintf("Waiting for an image (%s) to finish it's creation...", imageId))
 
 	// We are waiting for the instance since the waiting process checks for active transactions.

@@ -72,8 +72,8 @@ func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, re
 	// Create the request object
 	var lastResponse http.Response
 	switch requestType {
-	case "POST":
-		req, err := http.NewRequest("POST", url, requestBody)
+	case "POST", "DELETE":
+		req, err := http.NewRequest(requestType, url, requestBody)
 
 		if err != nil {
 			return nil, err
@@ -94,7 +94,7 @@ func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, re
 			lastResponse = *resp
 		}
 	default:
-		return nil, errors.New(fmt.Sprintf("Undefined request type '%s', only GET/POST is available!", requestType))
+		return nil, errors.New(fmt.Sprintf("Undefined request type '%s', only GET/POST/DELETE are available!", requestType))
 	}
 
 	responseBody, err := ioutil.ReadAll(lastResponse.Body)
@@ -143,6 +143,15 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 	return data, err
 }
 
+func (self SoftlayerClient) DestroyInstance(instanceId string) error {
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", instanceId), "DELETE", new(bytes.Buffer))
+
+	log.Printf("Deleted an Instance with id (%s), response: %s", instanceId, response)
+	// Process response for success?
+
+	return err
+}
+
 func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId float64, err error) {
 	templateRawData := map[string]string{"PublicKey": publicKey, "Label": label}
 	requestBody := self.generateRequestBody("builder/softlayer/templates/security_ssh_key/createObject.json", templateRawData)
@@ -152,6 +161,15 @@ func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId 
 	}
 
 	return data["id"].(float64), err
+}
+
+func (self SoftlayerClient) DestroySshKey(keyId float64) error {
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Security_Ssh_Key/%v.json", int(keyId)), "DELETE", new(bytes.Buffer))
+
+	log.Printf("Deleted an SSH Key with id (%v), response: %s", keyId, response)
+	// Process response for success?
+
+	return err
 }
 
 func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, error) {
@@ -177,21 +195,27 @@ func (self SoftlayerClient) captureImage(instanceId string, imageName string, im
 	return data, err
 }
 
+func (self SoftlayerClient) destroyImage(imageId string, datacenterName string) error {
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", imageId), "DELETE", new(bytes.Buffer))
+
+	log.Printf("Deleted an image with id (%s), response: %s", imageId, response)
+	// Process response for success?
+
+	return err
+}
+
 func (self SoftlayerClient) isInstantsReady(instanceId string) (bool, error) {
 	powerData, err := self.doHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getPowerState.json", instanceId), "GET", nil)
 	if err != nil {
 		return false, nil
 	}
 	isPowerOn := powerData["keyName"].(string) == "RUNNING"
-	log.Printf("Powered on? %s, errors? '%s'", isPowerOn, err)
 
 	transactionData, err := self.doHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getActiveTransaction.json", instanceId), "GET", nil)
-	log.Printf("Transaction data? %s, errors? '%s'", transactionData, err)
 	if err != nil {
 		return false, nil
 	}
 	noTransactions := len(transactionData) == 0
-	log.Printf("#Transactions '%i', data '%s'", len(transactionData), transactionData)
 
 	return isPowerOn && noTransactions, err
 }
@@ -206,7 +230,7 @@ func (self SoftlayerClient) waitForInstanceReady(instanceId string, timeout time
 		for {
 			attempts += 1
 
-			log.Printf("Checking instance status... (attempt: %d)", attempts)
+			//log.Printf("Checking instance status... (attempt: %d)", attempts)
 			isReady, err := self.isInstantsReady(instanceId)
 			if err != nil {
 				result <- err
