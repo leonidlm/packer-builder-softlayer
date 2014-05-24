@@ -26,15 +26,22 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 		LocalDiskFlag:        true,
 		DiskCapacity:         config.InstanceDiskCapacity,
 		NetworkSpeed:         config.InstanceNetworkSpeed,
-		ProvisioningSshKeyId: state.Get("ssh_key_id").(float64),
+		ProvisioningSshKeyId: state.Get("ssh_key_id").(int64),
 		BaseImageId:          config.BaseImageId,
 		BaseOsCode:           config.BaseOsCode,
 	}
-	instanceData, _ := client.CreateInstance(*instanceDefinition)
+
+	ui.Say("Creating an instance...")
+	instanceData, err := client.CreateInstance(*instanceDefinition)
+	if err != nil {
+		ui.Error(err.Error())
+		state.Put("error", err)
+		return multistep.ActionHalt
+	}
+
 	state.Put("instance_data", instanceData)
 	self.instanceId = instanceData["globalIdentifier"].(string)
-
-	ui.Say(fmt.Sprintf("Created instance '%s'", instanceData["globalIdentifier"].(string)))
+	ui.Say(fmt.Sprintf("Created instance, id: '%s'", instanceData["globalIdentifier"].(string)))
 
 	return multistep.ActionContinue
 }

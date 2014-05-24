@@ -21,7 +21,7 @@ func (*Artifact) BuilderId() string {
 // Destroy destroys the Softlayer image represented by the artifact.
 func (self *Artifact) Destroy() error {
 	log.Printf("Destroying image: %s", self.String())
-	err := self.client.destroyImage(self.imageId, self.datacenterName)
+	err := self.client.destroyImage(self.imageId)
 	return err
 }
 

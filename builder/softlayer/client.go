@@ -37,7 +37,7 @@ type InstanceType struct {
 	LocalDiskFlag        bool
 	DiskCapacity         int
 	NetworkSpeed         int
-	ProvisioningSshKeyId float64
+	ProvisioningSshKeyId int64
 	BaseImageId          string
 	BaseOsCode           string
 }
@@ -54,15 +54,27 @@ func (self SoftlayerClient) New(user string, key string) *SoftlayerClient {
 	}
 }
 
-func (self SoftlayerClient) generateRequestBody(templatePath string, templateData interface{}) *bytes.Buffer {
-	cwd, _ := os.Getwd()
+func (self SoftlayerClient) generateRequestBody(templatePath string, templateData interface{}) (*bytes.Buffer, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	bodyTemplate := template.Must(template.ParseFiles(filepath.Join(cwd, templatePath)))
 	body := new(bytes.Buffer)
 	bodyTemplate.Execute(body, templateData)
 
 	log.Printf("Generated request body %s", body)
 
-	return body
+	return body, nil
+}
+
+func (self SoftlayerClient) hasErrors(body map[string]interface{}) error {
+	if errString, ok := body["error"]; !ok {
+		return nil
+	} else {
+		return errors.New(errString.(string))
+	}
 }
 
 func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, requestBody *bytes.Buffer) ([]byte, error) {
@@ -134,10 +146,18 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 	instance.HostName = validName.ReplaceAllString(instance.HostName, "")
 	instance.Domain = validName.ReplaceAllString(instance.Domain, "")
 
-	requestBody := self.generateRequestBody("builder/softlayer/templates/virtual_guest/createObject.json", instance)
+	requestBody, err := self.generateRequestBody("builder/softlayer/templates/virtual_guest/createObject.json", instance)
+	if err != nil {
+		return nil, err
+	}
+
 	data, err := self.doHttpRequest("SoftLayer_Virtual_Guest/createObject", "POST", requestBody)
 	if err != nil {
 		return nil, nil
+	}
+
+	if err := self.hasErrors(data); err != nil {
+		return nil, err
 	}
 
 	return data, err
@@ -147,27 +167,40 @@ func (self SoftlayerClient) DestroyInstance(instanceId string) error {
 	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", instanceId), "DELETE", new(bytes.Buffer))
 
 	log.Printf("Deleted an Instance with id (%s), response: %s", instanceId, response)
-	// Process response for success?
+
+	if res := string(response[:]); res != "true" {
+		return errors.New(fmt.Sprintf("Failed to destroy and instance wit id '%s', got '%s' as response from the API.", instanceId, res))
+	}
 
 	return err
 }
 
-func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId float64, err error) {
+func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId int64, err error) {
 	templateRawData := map[string]string{"PublicKey": publicKey, "Label": label}
-	requestBody := self.generateRequestBody("builder/softlayer/templates/security_ssh_key/createObject.json", templateRawData)
+	requestBody, err := self.generateRequestBody("builder/softlayer/templates/security_ssh_key/createObject.json", templateRawData)
+	if err != nil {
+		return 0, err
+	}
+
 	data, err := self.doHttpRequest("SoftLayer_Security_Ssh_Key/createObject", "POST", requestBody)
 	if err != nil {
 		return 0, nil
 	}
 
-	return data["id"].(float64), err
+	if err := self.hasErrors(data); err != nil {
+		return 0, err
+	}
+
+	return int64(data["id"].(float64)), err
 }
 
-func (self SoftlayerClient) DestroySshKey(keyId float64) error {
+func (self SoftlayerClient) DestroySshKey(keyId int64) error {
 	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Security_Ssh_Key/%v.json", int(keyId)), "DELETE", new(bytes.Buffer))
 
 	log.Printf("Deleted an SSH Key with id (%v), response: %s", keyId, response)
-	// Process response for success?
+	if res := string(response[:]); res != "true" {
+		return errors.New(fmt.Sprintf("Failed to destroy and SSH key wit id '%v', got '%s' as response from the API.", keyId, res))
+	}
 
 	return err
 }
@@ -186,20 +219,30 @@ func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, erro
 
 func (self SoftlayerClient) captureImage(instanceId string, imageName string, imageDescription string) (map[string]interface{}, error) {
 	templateRawData := map[string]string{"ImageDescription": imageDescription, "ImageName": imageName}
-	requestBody := self.generateRequestBody("builder/softlayer/templates/virtual_guest/captureImage.json", templateRawData)
+	requestBody, err := self.generateRequestBody("builder/softlayer/templates/virtual_guest/captureImage.json", templateRawData)
+	if err != nil {
+		return nil, err
+	}
+
 	data, err := self.doHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/captureImage.json", instanceId), "POST", requestBody)
 	if err != nil {
 		return nil, nil
 	}
 
+	if err := self.hasErrors(data); err != nil {
+		return nil, err
+	}
+
 	return data, err
 }
 
-func (self SoftlayerClient) destroyImage(imageId string, datacenterName string) error {
+func (self SoftlayerClient) destroyImage(imageId string) error {
 	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", imageId), "DELETE", new(bytes.Buffer))
 
 	log.Printf("Deleted an image with id (%s), response: %s", imageId, response)
-	// Process response for success?
+	if res := string(response[:]); res != "true" {
+		return errors.New(fmt.Sprintf("Failed to destroy and image wit id '%s', got '%s' as response from the API.", imageId, res))
+	}
 
 	return err
 }
@@ -223,14 +266,14 @@ func (self SoftlayerClient) isInstantsReady(instanceId string) (bool, error) {
 func (self SoftlayerClient) waitForInstanceReady(instanceId string, timeout time.Duration) error {
 	done := make(chan struct{})
 	defer close(done)
-
 	result := make(chan error, 1)
+
 	go func() {
 		attempts := 0
 		for {
 			attempts += 1
 
-			//log.Printf("Checking instance status... (attempt: %d)", attempts)
+			log.Printf("Checking instance status... (attempt: %d)", attempts)
 			isReady, err := self.isInstantsReady(instanceId)
 			if err != nil {
 				result <- err

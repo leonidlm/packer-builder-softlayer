@@ -22,7 +22,7 @@ func sshAddress(state multistep.StateBag) (string, error) {
 }
 
 func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
-	//config := state.Get("config").(config)
+	config := state.Get("config").(config)
 	privateKey := state.Get("ssh_private_key").(string)
 
 	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
@@ -31,8 +31,7 @@ func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
 	}
 
 	return &ssh.ClientConfig{
-		//User: config.SSHUsername,
-		User: "root",
+		User: config.SshUserName,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},

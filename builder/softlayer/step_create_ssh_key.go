@@ -15,7 +15,7 @@ import (
 )
 
 type stepCreateSshKey struct {
-	keyId float64
+	keyId int64
 }
 
 func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction {
@@ -24,7 +24,12 @@ func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction
 
 	ui.Say("Creating temporary ssh key for the instance...")
 
-	rsaKey, _ := rsa.GenerateKey(rand.Reader, 2014)
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 2014)
+	if err != nil {
+		ui.Error(err.Error())
+		state.Put("error", err)
+		return multistep.ActionHalt
+	}
 
 	// ASN.1 DER encoded form
 	privDer := x509.MarshalPKCS1PrivateKey(rsaKey)
@@ -37,12 +42,23 @@ func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction
 	// Set the private key in the statebag for later
 	state.Put("ssh_private_key", string(pem.EncodeToMemory(&privBlk)))
 
-	pub, _ := ssh.NewPublicKey(&rsaKey.PublicKey)
+	pub, err := ssh.NewPublicKey(&rsaKey.PublicKey)
+	if err != nil {
+		ui.Error(err.Error())
+		state.Put("error", err)
+		return multistep.ActionHalt
+	}
+
 	publicKey := strings.TrimSpace(string(ssh.MarshalAuthorizedKey(pub)))
 
-	// The name of the public key on DO
+	// The name of the public key
 	label := fmt.Sprintf("packer-%s", uuid.TimeOrderedUUID())
-	keyId, _ := client.UploadSshKey(label, publicKey)
+	keyId, err := client.UploadSshKey(label, publicKey)
+	if err != nil {
+		ui.Error(err.Error())
+		state.Put("error", err)
+		return multistep.ActionHalt
+	}
 
 	self.keyId = keyId
 	state.Put("ssh_key_id", keyId)

@@ -12,7 +12,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 	client := state.Get("client").(*SoftlayerClient)
 	ui := state.Get("ui").(packer.Ui)
 
-	ui.Say("Preparing for capturing the instance (flex) image")
+	ui.Say("Preparing for capturing the instance image. Image snapshot type is Flex.")
 
 	instance := state.Get("instance_data").(map[string]interface{})
 	instanceId := instance["globalIdentifier"].(string)
@@ -22,6 +22,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 	if err != nil {
 		err := fmt.Errorf("Error while trying to capture an image from instance (id=%s). Error: %s", instanceId, err)
 		ui.Error(err.Error())
+		state.Put("error", err)
 		return multistep.ActionHalt
 	}
 
@@ -35,6 +36,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 	if err != nil {
 		err := fmt.Errorf("Error waiting for instance to become ACTIVE again after image creation call. Error: %s", err)
 		ui.Error(err.Error())
+		state.Put("error", err)
 		return multistep.ActionHalt
 	}
 

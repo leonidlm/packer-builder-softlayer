@@ -20,8 +20,6 @@
         "globalIdentifier": "{{.BaseImageId}}" 
       },
       {{else}}
-      "operatingSystemReferenceCode": "{{.BaseOsCode}}",
-      {{end}}
       "blockDevices": [
         {
           "device": "0",
@@ -30,6 +28,8 @@
           }
         }
       ],
+      "operatingSystemReferenceCode": "{{.BaseOsCode}}",
+      {{end}}
       "sshKeys": [
         {
           "id": {{.ProvisioningSshKeyId}}
