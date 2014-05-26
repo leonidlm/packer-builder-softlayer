@@ -2,7 +2,8 @@
   "parameters":[
     {
       "description": "{{.ImageDescription}}",
-      "name": "{{.ImageName}}"
+      "name": "{{.ImageName}}",
+      "summary": "{{.ImageDescription}}"
     }
   ]
 }
