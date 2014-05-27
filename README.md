@@ -71,7 +71,9 @@ The reference of available configuration options is listed below.
  * `username` (string) - The user name to use to access your account.
  * `api_key` (string) - The api key defined for the chosen user name. You can find what is your api key at the account->users tab of the SoftLayer web console.
  * `image_name` (string) - The name of the resulting image that will appear in your account. This must be unique. To help make this unique, use a function like timestamp.
- * `base_image_id` (string) - The ID of the base image to use (usually defined by the `globalIdentifier` or the `uuid` fields in SoftLayer API). This is the image that will be used for launching a new instance. To view all of your currently available images, run:
+ * `base_image_id` (string) - The ID of the base image to use (usually defined by the `globalIdentifier` or the `uuid` fields in SoftLayer API). This is the image that will be used for launching a new instance. 
+ __NOTE__ that if you choose to use this option, you must specify a private key using `ssh_private_key_file` (described below).
+ To view all of your currently available images, run:
 
 ```SHELL
  curl https://<username>:<api_key>@api.softlayer.com/rest/v3/SoftLayer_Account/getVirtualDiskImages.json
