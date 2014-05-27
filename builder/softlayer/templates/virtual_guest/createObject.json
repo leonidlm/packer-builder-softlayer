@@ -10,11 +10,6 @@
       "maxMemory": {{.Memory}},
       "hourlyBillingFlag": true, 
       "localDiskFlag": false,
-      "networkComponents": [
-        {
-          "maxSpeed": {{.NetworkSpeed}}
-        }
-      ],
       {{if .BaseImageId}}
       "blockDeviceTemplateGroup": { 
         "globalIdentifier": "{{.BaseImageId}}" 
@@ -30,9 +25,16 @@
       ],
       "operatingSystemReferenceCode": "{{.BaseOsCode}}",
       {{end}}
+      {{if .ProvisioningSshKeyId}}
       "sshKeys": [
         {
           "id": {{.ProvisioningSshKeyId}}
+        }
+      ],
+      {{end}}
+      "networkComponents": [
+        {
+          "maxSpeed": {{.NetworkSpeed}}
         }
       ]
     }

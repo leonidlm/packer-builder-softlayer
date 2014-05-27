@@ -16,6 +16,13 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 	config := state.Get("config").(config)
 	ui := state.Get("ui").(packer.Ui)
 
+	// The ssh_key_id can be empty if the user specified a private key
+	sshKeyId := state.Get("ssh_key_id")
+	var ProvisioningSshKeyId int64 = 0
+	if sshKeyId != nil {
+		ProvisioningSshKeyId = sshKeyId.(int64)
+	}
+
 	instanceDefinition := &InstanceType{
 		HostName:             config.InstanceName,
 		Domain:               config.InstanceDomain,
@@ -26,7 +33,7 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 		LocalDiskFlag:        true,
 		DiskCapacity:         config.InstanceDiskCapacity,
 		NetworkSpeed:         config.InstanceNetworkSpeed,
-		ProvisioningSshKeyId: state.Get("ssh_key_id").(int64),
+		ProvisioningSshKeyId: ProvisioningSshKeyId,
 		BaseImageId:          config.BaseImageId,
 		BaseOsCode:           config.BaseOsCode,
 	}

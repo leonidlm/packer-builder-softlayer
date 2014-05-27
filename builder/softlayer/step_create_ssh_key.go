@@ -10,18 +10,33 @@ import (
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/common/uuid"
 	"github.com/mitchellh/packer/packer"
+	"io/ioutil"
 	"log"
 	"strings"
 )
 
 type stepCreateSshKey struct {
-	keyId int64
+	keyId          int64
+	PrivateKeyFile string
 }
 
 func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction {
-	client := state.Get("client").(*SoftlayerClient)
 	ui := state.Get("ui").(packer.Ui)
+	if self.PrivateKeyFile != "" {
+		ui.Say(fmt.Sprintf("Reading private key file (%s)...", self.PrivateKeyFile))
 
+		privateKeyBytes, err := ioutil.ReadFile(self.PrivateKeyFile)
+		if err != nil {
+			state.Put("error", fmt.Errorf("Error loading configured private key file: %s", err))
+			return multistep.ActionHalt
+		}
+
+		state.Put("ssh_private_key", string(privateKeyBytes))
+
+		return multistep.ActionContinue
+	}
+
+	client := state.Get("client").(*SoftlayerClient)
 	ui.Say("Creating temporary ssh key for the instance...")
 
 	rsaKey, err := rsa.GenerateKey(rand.Reader, 2014)

@@ -33,6 +33,7 @@ type config struct {
 	InstanceDiskCapacity int    `mapstructure:"instance_disk_capacity"`
 	SshPort              int64  `mapstructure:"ssh_port"`
 	SshUserName          string `mapstructure:"ssh_username"`
+	SshPrivateKeyFile    string `mapstructure:"ssh_private_key_file"`
 
 	RawSshTimeout   string `mapstructure:"ssh_timeout"`
 	RawStateTimeout string `mapstructure:"instance_state_timeout"`
@@ -50,7 +51,7 @@ type Builder struct {
 }
 
 // Prepare processes the build configuration parameters.
-func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
+func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error) {
 	metadata, err := common.DecodeConfig(&self.config, raws...)
 	if err != nil {
 		return nil, err
@@ -58,6 +59,9 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 
 	// Check that there aren't any unknown configuration keys defined
 	errs := common.CheckUnusedConfig(metadata)
+	if errs == nil {
+		errs = &packer.MultiError{}
+	}
 
 	self.config.tpl, err = packer.NewConfigTemplate()
 	if err != nil {
@@ -136,6 +140,7 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 		"ssh_timeout":            &self.config.RawSshTimeout,
 		"instance_state_timeout": &self.config.RawStateTimeout,
 		"ssh_username":           &self.config.SshUserName,
+		"ssh_private_key_file":   &self.config.SshPrivateKeyFile,
 	}
 
 	for n, ptr := range templates {
@@ -172,6 +177,12 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 			errs, errors.New("please specify only one of base_image_id or base_os_code"))
 	}
 
+	if self.config.BaseImageId != "" && self.config.SshPrivateKeyFile == "" {
+		errs = packer.MultiErrorAppend(
+			errs, errors.New("when using base_image_id, you must specify ssh_private_key_file "+
+				"since automatic ssh key config for custom images isn't supported by SoftLayer API"))
+	}
+
 	// Translate date configuration data from string to time format
 	sshTimeout, err := time.ParseDuration(self.config.RawSshTimeout)
 	if err != nil {
@@ -188,7 +199,12 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 	self.config.StateTimeout = stateTimeout
 
 	log.Println(common.ScrubConfig(self.config, self.config.APIKey, self.config.Username))
-	return nil, nil
+
+	if len(errs.Errors) > 0 {
+		retErr = errors.New(errs.Error())
+	}
+
+	return nil, retErr
 }
 
 // Run executes a SoftLayer Packer build and returns a packer.Artifact
@@ -207,7 +223,9 @@ func (self *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (pa
 
 	// Build the steps
 	steps := []multistep.Step{
-		new(stepCreateSshKey),
+		&stepCreateSshKey{
+			PrivateKeyFile: self.config.SshPrivateKeyFile,
+		},
 		new(stepCreateInstance),
 		new(stepWaitforInstance),
 		&common.StepConnectSSH{
