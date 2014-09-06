@@ -1,8 +1,0 @@
-{
-  "parameters":[
-    {
-      "key": "{{.PublicKey}}",
-      "label": "{{.Label}}"
-    }
-  ]
-}
