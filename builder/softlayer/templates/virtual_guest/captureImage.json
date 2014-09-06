@@ -1,9 +1,0 @@
-{
-  "parameters":[
-    {
-      "description": "{{.ImageDescription}}",
-      "name": "{{.ImageName}}",
-      "summary": "{{.ImageDescription}}"
-    }
-  ]
-}

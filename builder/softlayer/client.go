@@ -8,10 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"regexp"
-	"text/template"
 	"time"
 )
 
@@ -26,9 +23,13 @@ type SoftlayerClient struct {
 	apiKey string
 }
 
+type SoftLayerRequest struct {
+	Parameters interface{} `json:"parameters"`
+}
+
 // Based on: http://sldn.softlayer.com/reference/datatypes/SoftLayer_Container_Virtual_Guest_Configuration/
 type InstanceType struct {
-	HostName             string
+	HostName             string `json:"hostname"`
 	Domain               string
 	Datacenter           string
 	Cpus                 int
@@ -40,6 +41,54 @@ type InstanceType struct {
 	ProvisioningSshKeyId int64
 	BaseImageId          string
 	BaseOsCode           string
+}
+
+type InstanceReq struct {
+	HostName                 string                    `json:"hostname"`
+	Domain                   string                    `json:"domain"`
+	Datacenter               *Datacenter               `json:"datacenter"`
+	Cpus                     int                       `json:"startCpus"`
+	Memory                   int64                     `json:"maxMemory"`
+	HourlyBillingFlag        bool                      `json:"hourlyBillingFlag"`
+	LocalDiskFlag            bool                      `json:"localDiskFlag"`
+	NetworkComponents        []*NetworkComponent       `json:"networkComponents"`
+	BlockDeviceTemplateGroup *BlockDeviceTemplateGroup `json:"blockDeviceTemplateGroup,omitempty"`
+	BlockDevices             []*BlockDevice            `json:"blockDevices,omitempty"`
+	OsReferenceCode          string                    `json:"operatingSystemReferenceCode,omitempty"`
+	SshKeys                  []*SshKey                 `json:"sshKeys,omitempty"`
+}
+
+type InstanceImage struct {
+	Descption string `json:"description"`
+	Name      string `json:"name"`
+	Summary   string `json:"summary"`
+}
+
+type Datacenter struct {
+	Name string `json:"name"`
+}
+
+type NetworkComponent struct {
+	MaxSpeed int `json:"maxSpeed"`
+}
+
+type BlockDeviceTemplateGroup struct {
+	Id string `json:"globalIdentifier"`
+}
+
+type DiskImage struct {
+	Capacity int `json:"capacity"`
+}
+
+type SshKey struct {
+	Id    int64  `json:"id,omitempty"`
+	Key   string `json:"key,omitempty"`
+	Label string `json:"label,omitempty"`
+}
+
+type BlockDevice struct {
+	Device    string     `json:"device"`
+	DiskImage *DiskImage `json:"diskImage"`
 }
 
 func (self SoftlayerClient) New(user string, key string) *SoftlayerClient {
@@ -54,19 +103,19 @@ func (self SoftlayerClient) New(user string, key string) *SoftlayerClient {
 	}
 }
 
-func (self SoftlayerClient) generateRequestBody(templatePath string, templateData interface{}) (*bytes.Buffer, error) {
-	cwd, err := os.Getwd()
+func (self SoftlayerClient) generateRequestBody(templateData interface{}) (*bytes.Buffer, error) {
+	softlayerRequest := &SoftLayerRequest{
+		Parameters: []interface{}{
+			templateData,
+		},
+	}
+
+	body, err := json.Marshal(softlayerRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	bodyTemplate := template.Must(template.ParseFiles(filepath.Join(cwd, templatePath)))
-	body := new(bytes.Buffer)
-	bodyTemplate.Execute(body, templateData)
-
-	log.Printf("Generated request body %s", body)
-
-	return body, nil
+	return bytes.NewBuffer(body), nil
 }
 
 func (self SoftlayerClient) hasErrors(body map[string]interface{}) error {
@@ -146,7 +195,49 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 	instance.HostName = validName.ReplaceAllString(instance.HostName, "")
 	instance.Domain = validName.ReplaceAllString(instance.Domain, "")
 
-	requestBody, err := self.generateRequestBody("builder/softlayer/templates/virtual_guest/createObject.json", instance)
+	// Construct the instance request object which will be decoded into json and posted to the API
+	instanceRequest := &InstanceReq{
+		HostName: instance.HostName,
+		Domain:   instance.Domain,
+		Datacenter: &Datacenter{
+			Name: instance.Datacenter,
+		},
+		Cpus:              instance.Cpus,
+		Memory:            instance.Memory,
+		HourlyBillingFlag: true,
+		LocalDiskFlag:     false,
+		NetworkComponents: []*NetworkComponent{
+			&NetworkComponent{
+				MaxSpeed: instance.NetworkSpeed,
+			},
+		},
+	}
+
+	if instance.ProvisioningSshKeyId != 0 {
+		instanceRequest.SshKeys = []*SshKey{
+			&SshKey{
+				Id: instance.ProvisioningSshKeyId,
+			},
+		}
+	}
+
+	if instance.BaseImageId != "" {
+		instanceRequest.BlockDeviceTemplateGroup = &BlockDeviceTemplateGroup{
+			Id: instance.BaseImageId,
+		}
+	} else {
+		instanceRequest.OsReferenceCode = instance.BaseOsCode
+		instanceRequest.BlockDevices = []*BlockDevice{
+			&BlockDevice{
+				Device: "0",
+				DiskImage: &DiskImage{
+					Capacity: instance.DiskCapacity,
+				},
+			},
+		}
+	}
+
+	requestBody, err := self.generateRequestBody(instanceRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +267,12 @@ func (self SoftlayerClient) DestroyInstance(instanceId string) error {
 }
 
 func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId int64, err error) {
-	templateRawData := map[string]string{"PublicKey": publicKey, "Label": label}
-	requestBody, err := self.generateRequestBody("builder/softlayer/templates/security_ssh_key/createObject.json", templateRawData)
+	sshKeyRequest := &SshKey{
+		Key:   publicKey,
+		Label: label,
+	}
+
+	requestBody, err := self.generateRequestBody(sshKeyRequest)
 	if err != nil {
 		return 0, err
 	}
@@ -218,8 +313,13 @@ func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, erro
 }
 
 func (self SoftlayerClient) captureImage(instanceId string, imageName string, imageDescription string) (map[string]interface{}, error) {
-	templateRawData := map[string]string{"ImageDescription": imageDescription, "ImageName": imageName}
-	requestBody, err := self.generateRequestBody("builder/softlayer/templates/virtual_guest/captureImage.json", templateRawData)
+	imageRequest := &InstanceImage{
+		Descption: imageDescription,
+		Name:      imageName,
+		Summary:   imageDescription,
+	}
+
+	requestBody, err := self.generateRequestBody(imageRequest)
 	if err != nil {
 		return nil, err
 	}
