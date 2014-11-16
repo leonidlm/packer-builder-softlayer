@@ -35,6 +35,10 @@ func (self *Artifact) Id() string {
 	return self.imageId
 }
 
+func (self *Artifact) State(name string) interface{} {
+	return nil
+}
+
 // String returns the string representation of the artifact.
 func (self *Artifact) String() string {
 	return fmt.Sprintf("%s::%s (%s)", self.datacenterName, self.imageId, self.imageName)
