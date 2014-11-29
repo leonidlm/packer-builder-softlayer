@@ -159,7 +159,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 
 	if self.config.Username == "" {
 		errs = packer.MultiErrorAppend(
-			errs, errors.New("username of the SOFTLAYER_USER_NAME environment variable must be specified"))
+			errs, errors.New("username or the SOFTLAYER_USER_NAME environment variable must be specified"))
 	}
 
 	if self.config.ImageName == "" {
