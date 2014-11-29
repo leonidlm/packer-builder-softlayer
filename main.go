@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/leonidlm/packer-builder-softlayer/builder/softlayer"
+	"github.com/jamesdobson/packer-builder-softlayer/builder/softlayer"
 	"github.com/mitchellh/packer/packer/plugin"
 )
 
