@@ -67,6 +67,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	if err != nil {
 		return nil, err
 	}
+	self.config.tpl.UserVars = self.config.PackerUserVars
 
 	// Assign default values if possible
 	if self.config.APIKey == "" {
@@ -154,12 +155,12 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	// Check for required configurations that will display errors if not set
 	if self.config.APIKey == "" {
 		errs = packer.MultiErrorAppend(
-			errs, errors.New("a api_key must be specified"))
+			errs, errors.New("api_key or the SOFTLAYER_API_KEY environment variable must be specified"))
 	}
 
 	if self.config.Username == "" {
 		errs = packer.MultiErrorAppend(
-			errs, errors.New("a username must be specified"))
+			errs, errors.New("username or the SOFTLAYER_USER_NAME environment variable must be specified"))
 	}
 
 	if self.config.ImageName == "" {
