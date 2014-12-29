@@ -3,8 +3,12 @@
 # Original version of this file copied from: https://raw.githubusercontent.com/mitchellh/packer/master/Vagrantfile
 #
 
-$script = <<SCRIPT
-SRCROOT="/opt/go"
+GOROOT = '/opt/go'
+GOPATH = '/opt/gopath'
+PACKAGE_PATH = 'src/github.com/leonidlm/packer-builder-softlayer'
+
+script = <<SCRIPT
+SRCROOT="#{GOROOT}"
 
 # Install Go
 sudo apt-get update
@@ -14,10 +18,10 @@ cd ${SRCROOT}/src
 sudo ./all.bash
 
 # Setup the GOPATH
-sudo mkdir -p /opt/gopath
+sudo mkdir -p #{GOPATH}
 cat <<EOF >/tmp/gopath.sh
-export GOPATH="/opt/gopath"
-export PATH="/opt/go/bin:\\$GOPATH/bin:\\$PATH"
+export GOPATH="#{GOPATH}"
+export PATH="#{GOROOT}/bin:\\$GOPATH/bin:\\$PATH"
 export SL_USERNAME=#{ENV['SL_USERNAME']}
 export SL_API_KEY=#{ENV['SL_API_KEY']}
 EOF
@@ -38,39 +42,39 @@ make updatedeps
 make
 make dev
 
-# Download and build packer-builder-softlayer
-cd $GOPATH
-# This builds packer-builder-softlayer and puts it in $GOPATH/bin
-go get -d -u github.com/leonidlm/packer-builder-softlayer
-cd $GOPATH/src/github.com/leonidlm/packer-builder-softlayer
-#gox -os="linux windows"
+# Build packer-builder-softlayer
+cd $GOPATH/#{PACKAGE_PATH}
 go build
 go install
 
 # Make sure the gopath is usable by vagrant
-sudo chown -R vagrant:vagrant $SRCROOT
-sudo chown -R vagrant:vagrant /opt/gopath
+sudo chown -R -f vagrant:vagrant $SRCROOT
+sudo chown -R -f vagrant:vagrant #{GOPATH} 
+
+echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
 SCRIPT
 
 Vagrant.configure(2) do |config|
   config.vm.box = "chef/ubuntu-12.04"
 
-  config.vm.provision "shell", inline: $script
+  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src' 
 
-  config.vm.synced_folder ".", "/vagrant", disabled: true
-
-  ["vmware_fusion", "vmware_workstation"].each do |p|
-    config.vm.provider "p" do |v|
-      v.vmx["memsize"] = "2048"
-      v.vmx["numvcpus"] = "2"
-      v.vmx["cpuid.coresPerSocket"] = "1"
-    end
-  end
+  config.vm.provision 'shell', inline: script
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 2048
     vb.cpus = 2
     vb.gui = false
   end
+
+  config.vm.provider 'parallels' do |parallels, override|
+    override.vm.box = 'parallels/ubuntu-12.04'
+    override.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", mount_options: ['rw', 'nosuid', 'nodev', 'sync', 'noatime', 'share'], id: 'src'
+    parallels.name = 'Packer SoftLayer Development Box'
+    parallels.optimize_power_consumption = false
+    parallels.memory = 2048
+    parallels.cpus = 2
+  end
 end
+
