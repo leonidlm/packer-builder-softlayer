@@ -58,6 +58,12 @@ type InstanceReq struct {
 	SshKeys                  []*SshKey                 `json:"sshKeys,omitempty"`
 }
 
+type CreateArchiveTransactionReq struct {
+	GroupName    string         `json:"groupName"`
+	BlockDevices []*BlockDevice `json:"blockDevices"`
+	Note         string         `json:"note"`
+}
+
 type InstanceImage struct {
 	Descption string `json:"description"`
 	Name      string `json:"name"`
@@ -87,8 +93,9 @@ type SshKey struct {
 }
 
 type BlockDevice struct {
-	Device    string     `json:"device"`
-	DiskImage *DiskImage `json:"diskImage"`
+	Id        int64      `json:"id,omitempty"`
+	Device    string     `json:"device,omitempty"`
+	DiskImage *DiskImage `json:"diskImage,omitempty"`
 }
 
 func (self SoftlayerClient) New(user string, key string) *SoftlayerClient {
@@ -103,17 +110,17 @@ func (self SoftlayerClient) New(user string, key string) *SoftlayerClient {
 	}
 }
 
-func (self SoftlayerClient) generateRequestBody(templateData interface{}) (*bytes.Buffer, error) {
+func (self SoftlayerClient) generateRequestBody(params ...interface{}) (*bytes.Buffer, error) {
 	softlayerRequest := &SoftLayerRequest{
-		Parameters: []interface{}{
-			templateData,
-		},
+		Parameters: params,
 	}
 
 	body, err := json.Marshal(softlayerRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Generated a request: %s", body)
 
 	return bytes.NewBuffer(body), nil
 }
@@ -185,6 +192,23 @@ func (self SoftlayerClient) doHttpRequest(path string, requestType string, reque
 	return decodedResponse, nil
 }
 
+func (self SoftlayerClient) doHttpRequestMany(path string, requestType string, requestBody *bytes.Buffer) (interface{}, error) {
+	responseBody, err := self.doRawHttpRequest(path, requestType, requestBody)
+	if err != nil {
+		err := errors.New(fmt.Sprintf("Failed to get proper HTTP response from SoftLayer API"))
+		return nil, err
+	}
+
+	var decodedResponse interface{}
+	err = json.Unmarshal(responseBody, &decodedResponse)
+	if err != nil {
+		err := errors.New(fmt.Sprintf("Failed to decode JSON response from SoftLayer: %s | %s", responseBody, err))
+		return nil, err
+	}
+
+	return decodedResponse, nil
+}
+
 func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]interface{}, error) {
 	// SoftLayer API puts some limitations on hostname and domain fields of the request
 	validName, err := regexp.Compile("[^A-Za-z0-9\\-\\.]+")
@@ -242,7 +266,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		return nil, err
 	}
 
-	data, err := self.doHttpRequest("SoftLayer_Virtual_Guest/createObject", "POST", requestBody)
+	data, err := self.doHttpRequest("SoftLayer_Virtual_Guest/createObject.json", "POST", requestBody)
 	if err != nil {
 		return nil, nil
 	}
@@ -277,7 +301,7 @@ func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId 
 		return 0, err
 	}
 
-	data, err := self.doHttpRequest("SoftLayer_Security_Ssh_Key/createObject", "POST", requestBody)
+	data, err := self.doHttpRequest("SoftLayer_Security_Ssh_Key/createObject.json", "POST", requestBody)
 	if err != nil {
 		return 0, nil
 	}
@@ -310,6 +334,71 @@ func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, erro
 	ipAddress := validIp.Find(response)
 
 	return string(ipAddress), nil
+}
+
+func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, error) {
+	data, err := self.doHttpRequestMany(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getBlockDevices.json?objectMask=mask.diskImage.name", instanceId), "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	switch v := data.(type) {
+	case []interface{}:
+		return v, nil
+	case map[string]interface{}:
+		if err := self.hasErrors(v); err != nil {
+			return nil, err
+		}
+
+		return nil, errors.New("Unexpected return type from getBlockDevices")
+	default:
+		return nil, errors.New("Unexpected return type from getBlockDevices")
+	}
+}
+
+func (self SoftlayerClient) getBlockDeviceTemplateGroups() ([]interface{}, error) {
+	data, err := self.doHttpRequestMany("SoftLayer_Account/getBlockDeviceTemplateGroups.json", "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	switch v := data.(type) {
+	case []interface{}:
+		return v, nil
+	case map[string]interface{}:
+		if err := self.hasErrors(v); err != nil {
+			return nil, err
+		}
+
+		return nil, errors.New("Unexpected return type from getBlockDeviceTemplateGroups")
+	default:
+		return nil, errors.New("Unexpected return type from getBlockDeviceTemplateGroups")
+	}
+}
+
+func (self SoftlayerClient) captureStandardImage(instanceId string, imageName string, imageDescription string, blockDeviceIds []int64) (map[string]interface{}, error) {
+	blockDevices := make([]*BlockDevice, len(blockDeviceIds))
+	for i, id := range blockDeviceIds {
+		blockDevices[i] = &BlockDevice{
+			Id: id,
+		}
+	}
+
+	requestBody, err := self.generateRequestBody(imageName, blockDevices, imageDescription)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := self.doHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/createArchiveTransaction.json", instanceId), "POST", requestBody)
+	if err != nil {
+		return nil, nil
+	}
+
+	if err := self.hasErrors(data); err != nil {
+		return nil, err
+	}
+
+	return data, err
 }
 
 func (self SoftlayerClient) captureImage(instanceId string, imageName string, imageDescription string) (map[string]interface{}, error) {
