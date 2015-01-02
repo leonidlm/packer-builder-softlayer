@@ -78,7 +78,7 @@ func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction
 	self.keyId = keyId
 	state.Put("ssh_key_id", keyId)
 
-	ui.Say(fmt.Sprintf("Created SSH key with id '%i'", keyId))
+	ui.Say(fmt.Sprintf("Created SSH key with id '%d'", keyId))
 
 	return multistep.ActionContinue
 }
@@ -97,6 +97,6 @@ func (self *stepCreateSshKey) Cleanup(state multistep.StateBag) {
 
 	if err != nil {
 		log.Printf("Error cleaning up ssh key: %v", err.Error())
-		ui.Error(fmt.Sprintf("Error cleaning up ssh key. Please delete the key (%i) manually", self.keyId))
+		ui.Error(fmt.Sprintf("Error cleaning up ssh key. Please delete the key (%d) manually", self.keyId))
 	}
 }
