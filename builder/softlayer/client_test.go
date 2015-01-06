@@ -4,10 +4,10 @@ import (
 	"testing"
 )
 
-func TestCaptureImage_GetBlockDeviceIds(t *testing.T) {
-	step := stepCaptureImage{}
+func TestClient_FindNonSwapBlockDeviceIds(t *testing.T) {
+	client := SoftlayerClient{}
 
-	result := step.getBlockDeviceIds(
+	result := client.findNonSwapBlockDeviceIds(
 		[]interface{} {
 			map[string]interface{} {
 				"device": "0",
@@ -35,7 +35,7 @@ func TestCaptureImage_GetBlockDeviceIds(t *testing.T) {
 
 
 
-	result = step.getBlockDeviceIds(
+	result = client.findNonSwapBlockDeviceIds(
 		[]interface{} {
 			map[string]interface{} {
 				"device": "0",
@@ -60,7 +60,7 @@ func TestCaptureImage_GetBlockDeviceIds(t *testing.T) {
 
 
 
-	result = step.getBlockDeviceIds(
+	result = client.findNonSwapBlockDeviceIds(
 		[]interface{} {
 			map[string]interface{} {
 				"device": "0",

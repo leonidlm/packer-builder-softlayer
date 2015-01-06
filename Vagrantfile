@@ -3,6 +3,11 @@
 # Original version of this file copied from: https://raw.githubusercontent.com/mitchellh/packer/master/Vagrantfile
 #
 
+# VM Specifications
+VM_MEMORY=2048
+VM_CPUS=2
+VM_GUI=false
+
 GOROOT = '/opt/go'
 GOPATH = '/opt/gopath'
 PACKAGE_PATH = 'src/github.com/leonidlm/packer-builder-softlayer'
@@ -45,6 +50,7 @@ make dev
 # Build packer-builder-softlayer
 cd $GOPATH/#{PACKAGE_PATH}
 go build
+go test ./...
 go install
 
 # Make sure the gopath is usable by vagrant
@@ -63,9 +69,9 @@ Vagrant.configure(2) do |config|
   config.vm.provision 'shell', inline: script
 
   config.vm.provider :virtualbox do |vb|
-    vb.memory = 2048
-    vb.cpus = 2
-    vb.gui = false
+    vb.memory = VM_MEMORY
+    vb.cpus = VM_CPUS
+    vb.gui = VM_GUI
   end
 
   config.vm.provider 'parallels' do |parallels, override|
@@ -73,8 +79,8 @@ Vagrant.configure(2) do |config|
     override.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", mount_options: ['rw', 'nosuid', 'nodev', 'sync', 'noatime', 'share'], id: 'src'
     parallels.name = 'Packer SoftLayer Development Box'
     parallels.optimize_power_consumption = false
-    parallels.memory = 2048
-    parallels.cpus = 2
+    parallels.memory = VM_MEMORY
+    parallels.cpus = VM_CPUS
   end
 end
 

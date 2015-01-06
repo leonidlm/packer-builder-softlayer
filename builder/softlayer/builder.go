@@ -45,6 +45,10 @@ type config struct {
 	tpl *packer.ConfigTemplate
 }
 
+// Image Types
+const IMAGE_TYPE_FLEX     = "flex"
+const IMAGE_TYPE_STANDARD = "standard"
+
 // Builder represents a Packer Builder.
 type Builder struct {
 	config config
@@ -98,7 +102,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	}
 
 	if self.config.ImageType == "" {
-		self.config.ImageType = "flex"
+		self.config.ImageType = IMAGE_TYPE_FLEX
 	}
 
 	if self.config.InstanceCpu == 0 {
@@ -174,7 +178,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 			errs, errors.New("image_name must be specified"))
 	}
 
-	if self.config.ImageType != "flex" && self.config.ImageType != "standard" {
+	if self.config.ImageType != IMAGE_TYPE_FLEX && self.config.ImageType != IMAGE_TYPE_STANDARD {
 		errs = packer.MultiErrorAppend(
 			errs, fmt.Errorf("Unknown image_type '%s'. Must be one of 'flex' (the default) or 'standard'.", self.config.ImageType))
 	}

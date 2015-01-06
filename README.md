@@ -114,6 +114,8 @@ As already stated above, a good way of reviewing the available options is by ins
 New contributors are always welcome! 
 When in doubt please feel free to ask questions, just [Create an issue](https://github.com/leonidlm/packer-builder-softlayer/issues/new) with your enquiries.
 
+### Development Environment
+
 The Vagrantfile creates a development environment with Go and packer checked out and built. Type "vagrant up" to bring up the environment and then "vagrant ssh" to log in. The packer-builder-softlayer directory on the host is shared to the guest VM, and packer-builder-softalyer is built during "vagrant up". The SL_USERNAME and SL_API_KEY environment variables from your host machine are propagated to the VM. 
 
 To run the unit tests, execute "go test ./..." from the root project directory.

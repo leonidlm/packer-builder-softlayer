@@ -23,17 +23,17 @@ func TestPrepare_ImageType(t *testing.T) {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
-	if b.config.ImageType != "flex" {
+	if b.config.ImageType != IMAGE_TYPE_FLEX {
 		t.Fatalf("Expected default image_type 'flex' but got '%s'", b.config.ImageType)
 	}
 
 	// Verify standard images are supported
-	c["image_type"] = "standard"
+	c["image_type"] = "standard" 
 	if _, err := b.Prepare(c); err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
-	if b.config.ImageType != "standard" {
+	if b.config.ImageType != IMAGE_TYPE_STANDARD {
 		t.Fatalf("Expected image_type 'standard' but got '%s'", b.config.ImageType)
 	}
 
