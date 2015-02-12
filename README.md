@@ -12,8 +12,11 @@ Next, clone this repository into `$GOPATH/src/github.com/leonidlm/packer-builder
 
 ```
 cd $GOPATH/src/github.com/leonidlm/packer-builder-softlayer
+go get ./...
 go build -o /usr/local/packer/packer-builder-softlayer main.go
 ```
+
+Make sure mercurial is properly installed in your system and consequently `hg` binary is available on your path.
 
 Now [configure Packer](http://www.packer.io/docs/other/core-configuration.html) to pick up the new builder:
 
