@@ -72,7 +72,7 @@ The reference of available configuration options is listed below.
  * `username` (string) - The user name to use to access your account. If unspecified, the value is taken from the SOFTLAYER_USER_NAME environment variable.
  * `api_key` (string) - The api key defined for the chosen user name. You can find what is your api key at the account->users tab of the SoftLayer web console. If unspecified, the value is taken from the SOFTLAYER_API_KEY environment variable.
  * `image_name` (string) - The name of the resulting image that will appear in your account. This must be unique. To help make this unique, use a function like timestamp.
- * `base_image_id` (string) - The ID of the base image to use (usually defined by the `globalIdentifier` or the `uuid` fields in SoftLayer API). This is the image that will be used for launching a new instance. 
+ * `base_image_id` (string) - The ID of the base image to use (usually defined by the `globalIdentifier` or the `uuid` fields in SoftLayer API). This is the image that will be used for launching a new instance.
  __NOTE__ that if you choose to use this option, you must specify a private key using `ssh_private_key_file` (described below).
  To view all of your currently available images, run:
 
@@ -80,7 +80,7 @@ The reference of available configuration options is listed below.
  curl https://<username>:<api_key>@api.softlayer.com/rest/v3/SoftLayer_Account/getVirtualDiskImages.json
 ```
 
- * `base_os_code` (string) - If you would like to start from a pre-installed SoftLayer OS image, you can specify it's reference code. 
+ * `base_os_code` (string) - If you would like to start from a pre-installed SoftLayer OS image, you can specify it's reference code.
  __NOTE__ that you can use only one of `base_image_id` or `base_os_code` per builder configuration.
  To view all of the currently available pre-installed os images, run:
 
@@ -111,12 +111,12 @@ As already stated above, a good way of reviewing the available options is by ins
 
 ## Contribute
 
-New contributors are always welcome! 
+New contributors are always welcome!
 When in doubt please feel free to ask questions, just [Create an issue](https://github.com/leonidlm/packer-builder-softlayer/issues/new) with your enquiries.
 
 ### Development Environment
 
-The Vagrantfile creates a development environment with Go and packer checked out and built. Type "vagrant up" to bring up the environment and then "vagrant ssh" to log in. The packer-builder-softlayer directory on the host is shared to the guest VM, and packer-builder-softalyer is built during "vagrant up". The SL_USERNAME and SL_API_KEY environment variables from your host machine are propagated to the VM. 
+The Vagrantfile creates a development environment with Go and packer checked out and built. Type "vagrant up" to bring up the environment and then "vagrant ssh" to log in. The packer-builder-softlayer directory on the host is shared to the guest VM, and packer-builder-softalyer is built during "vagrant up". The SL_USERNAME and SL_API_KEY environment variables from your host machine are propagated to the VM.
 
 To run the unit tests, execute "go test ./..." from the root project directory.
 
@@ -125,4 +125,3 @@ To run the unit tests, execute "go test ./..." from the root project directory.
 * Configure travis CI or any alternative to automatically test and build the code
 * Provide an easier way to install (with no need to compile from source)
 * Add an option to configure multiple disks for the instance
-

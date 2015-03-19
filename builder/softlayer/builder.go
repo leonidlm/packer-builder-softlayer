@@ -3,12 +3,13 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/packer"
 	"log"
 	"os"
 	"time"
+
+	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/common"
+	"github.com/mitchellh/packer/packer"
 )
 
 // The unique ID for this builder.
@@ -46,7 +47,7 @@ type config struct {
 }
 
 // Image Types
-const IMAGE_TYPE_FLEX     = "flex"
+const IMAGE_TYPE_FLEX = "flex"
 const IMAGE_TYPE_STANDARD = "standard"
 
 // Builder represents a Packer Builder.
@@ -90,7 +91,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	}
 
 	if self.config.InstanceName == "" {
-		self.config.InstanceName = fmt.Sprintf("packer-softlayer-%s", time.Now().Unix())
+		self.config.InstanceName = fmt.Sprintf("packer-softlayer-%d", time.Now().Unix())
 	}
 
 	if self.config.InstanceDomain == "" {

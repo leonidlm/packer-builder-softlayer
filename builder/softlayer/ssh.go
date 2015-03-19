@@ -1,9 +1,10 @@
 package softlayer
 
 import (
-	"code.google.com/p/go.crypto/ssh"
 	"errors"
 	"fmt"
+
+	"code.google.com/p/go.crypto/ssh"
 	"github.com/mitchellh/multistep"
 )
 

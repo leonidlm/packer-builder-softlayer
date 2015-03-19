@@ -4,9 +4,9 @@
 #
 
 # VM Specifications
-VM_MEMORY=2048
-VM_CPUS=2
-VM_GUI=false
+VM_MEMORY = 2048
+VM_CPUS = 2
+VM_GUI = false
 
 GOROOT = '/opt/go'
 GOPATH = '/opt/gopath'
@@ -55,16 +55,16 @@ go install
 
 # Make sure the gopath is usable by vagrant
 sudo chown -R -f vagrant:vagrant $SRCROOT
-sudo chown -R -f vagrant:vagrant #{GOPATH} 
+sudo chown -R -f vagrant:vagrant #{GOPATH}
 
 echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "chef/ubuntu-12.04"
+  config.vm.box = 'chef/ubuntu-12.04'
 
-  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src' 
+  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src'
 
   config.vm.provision 'shell', inline: script
 
@@ -76,11 +76,10 @@ Vagrant.configure(2) do |config|
 
   config.vm.provider 'parallels' do |parallels, override|
     override.vm.box = 'parallels/ubuntu-12.04'
-    override.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", mount_options: ['rw', 'nosuid', 'nodev', 'sync', 'noatime', 'share'], id: 'src'
+    override.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", mount_options: %w(rw nosuid nodev sync noatime share), id: 'src'
     parallels.name = 'Packer SoftLayer Development Box'
     parallels.optimize_power_consumption = false
     parallels.memory = VM_MEMORY
     parallels.cpus = VM_CPUS
   end
 end
-
