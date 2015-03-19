@@ -90,7 +90,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	}
 
 	if self.config.InstanceName == "" {
-		self.config.InstanceName = fmt.Sprintf("packer-softlayer-%s", time.Now().Unix())
+		self.config.InstanceName = fmt.Sprintf("packer-softlayer-%d", time.Now().Unix())
 	}
 
 	if self.config.InstanceDomain == "" {
