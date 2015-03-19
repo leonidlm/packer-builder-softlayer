@@ -55,7 +55,7 @@ go install
 
 # Make sure the gopath is usable by vagrant
 sudo chown -R -f vagrant:vagrant $SRCROOT
-sudo chown -R -f vagrant:vagrant #{GOPATH} 
+sudo chown -R -f vagrant:vagrant #{GOPATH}
 
 echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
@@ -64,7 +64,7 @@ SCRIPT
 Vagrant.configure(2) do |config|
   config.vm.box = "chef/ubuntu-12.04"
 
-  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src' 
+  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src'
 
   config.vm.provision 'shell', inline: script
 
@@ -83,4 +83,3 @@ Vagrant.configure(2) do |config|
     parallels.cpus = VM_CPUS
   end
 end
-
