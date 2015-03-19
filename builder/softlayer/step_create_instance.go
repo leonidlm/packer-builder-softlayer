@@ -2,9 +2,10 @@ package softlayer
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/packer"
-	"log"
 )
 
 type stepCreateInstance struct {

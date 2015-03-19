@@ -3,12 +3,13 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/packer"
 	"log"
 	"os"
 	"time"
+
+	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/common"
+	"github.com/mitchellh/packer/packer"
 )
 
 // The unique ID for this builder.
