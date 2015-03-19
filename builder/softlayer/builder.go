@@ -46,7 +46,7 @@ type config struct {
 }
 
 // Image Types
-const IMAGE_TYPE_FLEX     = "flex"
+const IMAGE_TYPE_FLEX = "flex"
 const IMAGE_TYPE_STANDARD = "standard"
 
 // Builder represents a Packer Builder.
