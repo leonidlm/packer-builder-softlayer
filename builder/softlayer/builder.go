@@ -77,12 +77,12 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	// Assign default values if possible
 	if self.config.APIKey == "" {
 		// Default to environment variable for api_key, if it exists
-		self.config.APIKey = os.Getenv("SOFTLAYER_API_KEY")
+		self.config.APIKey = os.Getenv("SL_API_KEY")
 	}
 
 	if self.config.Username == "" {
 		// Default to environment variable for client_id, if it exists
-		self.config.Username = os.Getenv("SOFTLAYER_USER_NAME")
+		self.config.Username = os.Getenv("SL_USERNAME")
 	}
 
 	if self.config.DatacenterName == "" {
@@ -165,12 +165,12 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	// Check for required configurations that will display errors if not set
 	if self.config.APIKey == "" {
 		errs = packer.MultiErrorAppend(
-			errs, errors.New("api_key or the SOFTLAYER_API_KEY environment variable must be specified"))
+			errs, errors.New("api_key or the SL_API_KEY environment variable must be specified"))
 	}
 
 	if self.config.Username == "" {
 		errs = packer.MultiErrorAppend(
-			errs, errors.New("username or the SOFTLAYER_USER_NAME environment variable must be specified"))
+			errs, errors.New("username or the SL_USERNAME environment variable must be specified"))
 	}
 
 	if self.config.ImageName == "" {
