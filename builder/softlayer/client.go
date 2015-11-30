@@ -192,10 +192,10 @@ func (self SoftlayerClient) doHttpRequest(path string, requestType string, reque
 			return nil, err
 		}
 
-		return []interface{} {v,}, nil
+		return []interface{}{v}, nil
 
 	case nil:
-		return []interface{} {nil,}, nil	
+		return []interface{}{nil}, nil
 	default:
 		return nil, errors.New("Unexpected type in HTTP response")
 	}
@@ -223,7 +223,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		HourlyBillingFlag: true,
 		LocalDiskFlag:     false,
 		NetworkComponents: []*NetworkComponent{
-			&NetworkComponent{
+			{
 				MaxSpeed: instance.NetworkSpeed,
 			},
 		},
@@ -231,7 +231,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 
 	if instance.ProvisioningSshKeyId != 0 {
 		instanceRequest.SshKeys = []*SshKey{
-			&SshKey{
+			{
 				Id: instance.ProvisioningSshKeyId,
 			},
 		}
@@ -244,7 +244,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
 		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
+			{
 				Device: "0",
 				DiskImage: &DiskImage{
 					Capacity: instance.DiskCapacity,
@@ -329,7 +329,7 @@ func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, e
 	return data, nil
 }
 
-func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) ([]int64) {
+func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) []int64 {
 	blockDeviceIds := make([]int64, len(blockDevices))
 	deviceCount := 0
 
@@ -378,9 +378,8 @@ func (self SoftlayerClient) findImageIdByName(imageName string) (string, error) 
 		return "", err
 	}
 
-	return imageId, nil;
+	return imageId, nil
 }
-
 
 func (self SoftlayerClient) captureStandardImage(instanceId string, imageName string, imageDescription string, blockDeviceIds []int64) (map[string]interface{}, error) {
 	blockDevices := make([]*BlockDevice, len(blockDeviceIds))
