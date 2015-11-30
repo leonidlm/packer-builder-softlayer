@@ -31,6 +31,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 		}
 
 		blockDeviceIds := client.findNonSwapBlockDeviceIds(blockDevices)
+
 		ui.Say(fmt.Sprintf("Will caputure standard image using these block devices: %v", blockDeviceIds))
 
 		_, err = client.captureStandardImage(instanceId, config.ImageName, config.ImageDescription, blockDeviceIds)
@@ -73,6 +74,8 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 		state.Put("error", err)
 		return multistep.ActionHalt
 	}
+
+	ui.Say(fmt.Sprintf("Image %q for instance %q created", imageId, instanceId))
 
 	return multistep.ActionContinue
 }

@@ -65,7 +65,7 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 		return nil, err
 	}
 
-	var errs *packer.MultiError
+	errs := &packer.MultiError{}
 	// Assign default values if possible
 	if self.config.APIKey == "" {
 		// Default to environment variable for api_key, if it exists
@@ -111,6 +111,10 @@ func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
 
 	if self.config.InstanceDiskCapacity == 0 {
 		self.config.InstanceDiskCapacity = 25
+	}
+
+	if self.config.Type == "" {
+		self.config.Type = "ssh"
 	}
 
 	if self.config.SSHPort == 0 {
