@@ -2,9 +2,10 @@ package softlayer
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/packer"
-	"log"
 )
 
 type stepCreateInstance struct {
@@ -13,7 +14,7 @@ type stepCreateInstance struct {
 
 func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*SoftlayerClient)
-	config := state.Get("config").(Config)
+	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
 	// The ssh_key_id can be empty if the user specified a private key

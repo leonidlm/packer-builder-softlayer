@@ -3,12 +3,16 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/packer"
 	"log"
 	"os"
 	"time"
+
+	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/common"
+	"github.com/mitchellh/packer/helper/communicator"
+	"github.com/mitchellh/packer/helper/config"
+	"github.com/mitchellh/packer/packer"
+	"github.com/mitchellh/packer/template/interpolate"
 )
 
 // The unique ID for this builder.
@@ -16,6 +20,7 @@ const BuilderId = "packer.softlayer"
 
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
+	communicator.Config `mapstructure:",squash"`
 
 	Username         string `mapstructure:"username"`
 	APIKey           string `mapstructure:"api_key"`
@@ -32,48 +37,35 @@ type Config struct {
 	InstanceMemory       int64  `mapstructure:"instance_memory"`
 	InstanceNetworkSpeed int    `mapstructure:"instance_network_speed"`
 	InstanceDiskCapacity int    `mapstructure:"instance_disk_capacity"`
-	SshPort              int64  `mapstructure:"ssh_port"`
-	SshUserName          string `mapstructure:"ssh_username"`
-	SshPrivateKeyFile    string `mapstructure:"ssh_private_key_file"`
 
-	RawSshTimeout   string `mapstructure:"ssh_timeout"`
-	RawStateTimeout string `mapstructure:"instance_state_timeout"`
+	StateTimeout time.Duration `mapstructure:"instance_state_timeout"`
 
-	SshTimeout   time.Duration
-	StateTimeout time.Duration
-
-	tpl *packer.ConfigTemplate
+	ctx interpolate.Context
 }
 
 // Image Types
-const IMAGE_TYPE_FLEX = "flex"
-const IMAGE_TYPE_STANDARD = "standard"
+const (
+	IMAGE_TYPE_FLEX     = "flex"
+	IMAGE_TYPE_STANDARD = "standard"
+)
 
 // Builder represents a Packer Builder.
 type Builder struct {
 	config Config
+	comm   communicator.Config
 	runner multistep.Runner
 }
 
 // Prepare processes the build configuration parameters.
-func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error) {
-	metadata, err := common.DecodeConfig(&self.config, raws...)
+func (self *Builder) Prepare(raws ...interface{}) ([]string, error) {
+	err := config.Decode(&self.config, &config.DecodeOpts{
+		Interpolate: true,
+	}, raws...)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check that there aren't any unknown configuration keys defined
-	errs := common.CheckUnusedConfig(metadata)
-	if errs == nil {
-		errs = &packer.MultiError{}
-	}
-
-	self.config.tpl, err = packer.NewConfigTemplate()
-	if err != nil {
-		return nil, err
-	}
-	self.config.tpl.UserVars = self.config.PackerUserVars
-
+	var errs *packer.MultiError
 	// Assign default values if possible
 	if self.config.APIKey == "" {
 		// Default to environment variable for api_key, if it exists
@@ -121,45 +113,20 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 		self.config.InstanceDiskCapacity = 25
 	}
 
-	if self.config.SshPort == 0 {
-		self.config.SshPort = 22
+	if self.config.SSHPort == 0 {
+		self.config.SSHPort = 22
 	}
 
-	if self.config.SshUserName == "" {
-		self.config.SshUserName = "root"
+	if self.config.SSHUsername == "" {
+		self.config.SSHUsername = "root"
 	}
 
-	if self.config.RawSshTimeout == "" {
-		self.config.RawSshTimeout = "5m"
+	if self.config.SSHTimeout == 0 {
+		self.config.SSHTimeout = 5 * time.Minute
 	}
 
-	if self.config.RawStateTimeout == "" {
-		self.config.RawStateTimeout = "10m"
-	}
-
-	templates := map[string]*string{
-		"username":               &self.config.Username,
-		"api_key":                &self.config.APIKey,
-		"datacenter_name":        &self.config.DatacenterName,
-		"base_image_id":          &self.config.BaseImageId,
-		"image_name":             &self.config.ImageName,
-		"image_description":      &self.config.ImageDescription,
-		"image_type":             &self.config.ImageType,
-		"base_os_code":           &self.config.BaseOsCode,
-		"instance_name":          &self.config.InstanceName,
-		"instance_domain":        &self.config.InstanceDomain,
-		"ssh_timeout":            &self.config.RawSshTimeout,
-		"instance_state_timeout": &self.config.RawStateTimeout,
-		"ssh_username":           &self.config.SshUserName,
-		"ssh_private_key_file":   &self.config.SshPrivateKeyFile,
-	}
-
-	for n, ptr := range templates {
-		var err error
-		*ptr, err = self.config.tpl.Process(*ptr, nil)
-		if err != nil {
-			errs = packer.MultiErrorAppend(errs, fmt.Errorf("Error processing %s: %s", n, err))
-		}
+	if self.config.StateTimeout == 0 {
+		self.config.StateTimeout = 10 * time.Minute
 	}
 
 	// Check for required configurations that will display errors if not set
@@ -193,34 +160,19 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 			errs, errors.New("please specify only one of base_image_id or base_os_code"))
 	}
 
-	if self.config.BaseImageId != "" && self.config.SshPrivateKeyFile == "" {
+	if self.config.BaseImageId != "" && self.config.SSHPrivateKey == "" {
 		errs = packer.MultiErrorAppend(
 			errs, errors.New("when using base_image_id, you must specify ssh_private_key_file "+
 				"since automatic ssh key config for custom images isn't supported by SoftLayer API"))
 	}
 
-	// Translate date configuration data from string to time format
-	sshTimeout, err := time.ParseDuration(self.config.RawSshTimeout)
-	if err != nil {
-		errs = packer.MultiErrorAppend(
-			errs, fmt.Errorf("Failed parsing ssh_timeout: %s", err))
-	}
-	self.config.SshTimeout = sshTimeout
-
-	stateTimeout, err := time.ParseDuration(self.config.RawStateTimeout)
-	if err != nil {
-		errs = packer.MultiErrorAppend(
-			errs, fmt.Errorf("Failed parsing state_timeout: %s", err))
-	}
-	self.config.StateTimeout = stateTimeout
-
 	log.Println(common.ScrubConfig(self.config, self.config.APIKey, self.config.Username))
 
 	if len(errs.Errors) > 0 {
-		retErr = errors.New(errs.Error())
+		return nil, errors.New(errs.Error())
 	}
 
-	return nil, retErr
+	return nil, nil
 }
 
 // Run executes a SoftLayer Packer build and returns a packer.Artifact
@@ -228,11 +180,11 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 func (self *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packer.Artifact, error) {
 
 	// Create the client
-	client := SoftlayerClient{}.New(self.config.Username, self.config.APIKey)
+	client := (SoftlayerClient{}).New(self.config.Username, self.config.APIKey)
 
 	// Set up the state which is used to share state between the steps
 	state := new(multistep.BasicStateBag)
-	state.Put("config", self.config)
+	state.Put("config", &self.config)
 	state.Put("client", client)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
@@ -240,14 +192,15 @@ func (self *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (pa
 	// Build the steps
 	steps := []multistep.Step{
 		&stepCreateSshKey{
-			PrivateKeyFile: self.config.SshPrivateKeyFile,
+			PrivateKeyFile: self.config.SSHPrivateKey,
 		},
 		new(stepCreateInstance),
 		new(stepWaitforInstance),
-		&common.StepConnectSSH{
-			SSHAddress:     sshAddress,
-			SSHConfig:      sshConfig,
-			SSHWaitTimeout: self.config.SshTimeout,
+		&communicator.StepConnect{
+			Config:    &self.config.Config,
+			Host:      sshHost,
+			SSHPort:   sshPort,
+			SSHConfig: sshConfig,
 		},
 		new(common.StepProvision),
 		new(stepCaptureImage),

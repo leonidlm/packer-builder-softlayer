@@ -1,19 +1,22 @@
 package softlayer
 
 import (
-	"code.google.com/p/gosshold/ssh"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common/uuid"
-	"github.com/mitchellh/packer/packer"
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"code.google.com/p/gosshold/ssh"
+	"github.com/mitchellh/multistep"
+	"github.com/mitchellh/packer/common/uuid"
+	"github.com/mitchellh/packer/packer"
 )
+
+// TODO: get rid of gosshold
 
 type stepCreateSshKey struct {
 	keyId          int64
