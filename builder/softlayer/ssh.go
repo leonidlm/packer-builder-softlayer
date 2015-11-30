@@ -8,7 +8,7 @@ import (
 )
 
 func sshAddress(state multistep.StateBag) (string, error) {
-	config := state.Get("config").(config)
+	config := state.Get("config").(Config)
 	client := state.Get("client").(*SoftlayerClient)
 	instance := state.Get("instance_data").(map[string]interface{})
 	instanceId := instance["globalIdentifier"].(string)
@@ -22,7 +22,7 @@ func sshAddress(state multistep.StateBag) (string, error) {
 }
 
 func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
-	config := state.Get("config").(config)
+	config := state.Get("config").(Config)
 	privateKey := state.Get("ssh_private_key").(string)
 
 	signer, err := ssh.ParsePrivateKey([]byte(privateKey))

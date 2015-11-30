@@ -14,7 +14,7 @@ import (
 // The unique ID for this builder.
 const BuilderId = "packer.softlayer"
 
-type config struct {
+type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 
 	Username         string `mapstructure:"username"`
@@ -51,7 +51,7 @@ const IMAGE_TYPE_STANDARD = "standard"
 
 // Builder represents a Packer Builder.
 type Builder struct {
-	config config
+	config Config
 	runner multistep.Runner
 }
 
