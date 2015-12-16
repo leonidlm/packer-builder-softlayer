@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -121,14 +122,14 @@ func (self SoftlayerClient) generateRequestBody(params ...interface{}) (*bytes.B
 }
 
 func (self SoftlayerClient) hasErrors(body map[string]interface{}) error {
-	if errString, ok := body["error"]; !ok {
+	errString, ok := body["error"]
+	if !ok {
 		return nil
-	} else {
-		return errors.New(errString.(string))
 	}
+	return errors.New(errString.(string))
 }
 
-func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, requestBody *bytes.Buffer) ([]byte, error) {
+func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, requestBody io.Reader) ([]byte, error) {
 	url := fmt.Sprintf("https://%s:%s@%s/%s", self.user, self.apiKey, SOFTLAYER_API_URL, path)
 	log.Printf("Sending new request to softlayer: %s", url)
 
@@ -137,25 +138,23 @@ func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, re
 	switch requestType {
 	case "POST", "DELETE":
 		req, err := http.NewRequest(requestType, url, requestBody)
-
 		if err != nil {
 			return nil, err
+		}
+		if strings.HasSuffix(req.URL.Path, ".json") && requestBody != nil {
+			req.Header.Set("ContentType", "application/json")
 		}
 		resp, err := self.http.Do(req)
-
 		if err != nil {
 			return nil, err
-		} else {
-			lastResponse = *resp
 		}
+		lastResponse = *resp
 	case "GET":
 		resp, err := http.Get(url)
-
 		if err != nil {
 			return nil, err
-		} else {
-			lastResponse = *resp
 		}
+		lastResponse = *resp
 	default:
 		return nil, errors.New(fmt.Sprintf("Undefined request type '%s', only GET/POST/DELETE are available!", requestType))
 	}
@@ -170,7 +169,7 @@ func (self SoftlayerClient) doRawHttpRequest(path string, requestType string, re
 	return responseBody, nil
 }
 
-func (self SoftlayerClient) doHttpRequest(path string, requestType string, requestBody *bytes.Buffer) ([]interface{}, error) {
+func (self SoftlayerClient) doHttpRequest(path string, requestType string, requestBody io.Reader) ([]interface{}, error) {
 	responseBody, err := self.doRawHttpRequest(path, requestType, requestBody)
 	if err != nil {
 		err := errors.New(fmt.Sprintf("Failed to get proper HTTP response from SoftLayer API"))
@@ -192,10 +191,10 @@ func (self SoftlayerClient) doHttpRequest(path string, requestType string, reque
 			return nil, err
 		}
 
-		return []interface{} {v,}, nil
+		return []interface{}{v}, nil
 
 	case nil:
-		return []interface{} {nil,}, nil	
+		return []interface{}{nil}, nil
 	default:
 		return nil, errors.New("Unexpected type in HTTP response")
 	}
@@ -223,7 +222,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		HourlyBillingFlag: true,
 		LocalDiskFlag:     false,
 		NetworkComponents: []*NetworkComponent{
-			&NetworkComponent{
+			{
 				MaxSpeed: instance.NetworkSpeed,
 			},
 		},
@@ -231,7 +230,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 
 	if instance.ProvisioningSshKeyId != 0 {
 		instanceRequest.SshKeys = []*SshKey{
-			&SshKey{
+			{
 				Id: instance.ProvisioningSshKeyId,
 			},
 		}
@@ -244,7 +243,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
 		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
+			{
 				Device: "0",
 				DiskImage: &DiskImage{
 					Capacity: instance.DiskCapacity,
@@ -267,7 +266,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 }
 
 func (self SoftlayerClient) DestroyInstance(instanceId string) error {
-	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", instanceId), "DELETE", new(bytes.Buffer))
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", instanceId), "DELETE", nil)
 
 	log.Printf("Deleted an Instance with id (%s), response: %s", instanceId, response)
 
@@ -298,7 +297,7 @@ func (self SoftlayerClient) UploadSshKey(label string, publicKey string) (keyId 
 }
 
 func (self SoftlayerClient) DestroySshKey(keyId int64) error {
-	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Security_Ssh_Key/%v.json", int(keyId)), "DELETE", new(bytes.Buffer))
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Security_Ssh_Key/%v.json", int(keyId)), "DELETE", nil)
 
 	log.Printf("Deleted an SSH Key with id (%v), response: %s", keyId, response)
 	if res := string(response[:]); res != "true" {
@@ -329,7 +328,7 @@ func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, e
 	return data, nil
 }
 
-func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) ([]int64) {
+func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) []int64 {
 	blockDeviceIds := make([]int64, len(blockDevices))
 	deviceCount := 0
 
@@ -378,9 +377,8 @@ func (self SoftlayerClient) findImageIdByName(imageName string) (string, error) 
 		return "", err
 	}
 
-	return imageId, nil;
+	return imageId, nil
 }
-
 
 func (self SoftlayerClient) captureStandardImage(instanceId string, imageName string, imageDescription string, blockDeviceIds []int64) (map[string]interface{}, error) {
 	blockDevices := make([]*BlockDevice, len(blockDeviceIds))
@@ -424,7 +422,7 @@ func (self SoftlayerClient) captureImage(instanceId string, imageName string, im
 }
 
 func (self SoftlayerClient) destroyImage(imageId string) error {
-	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", imageId), "DELETE", new(bytes.Buffer))
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s.json", imageId), "DELETE", nil)
 
 	log.Printf("Deleted an image with id (%s), response: %s", imageId, response)
 	if res := string(response[:]); res != "true" {
@@ -472,8 +470,8 @@ func (self SoftlayerClient) waitForInstanceReady(instanceId string, timeout time
 				return
 			}
 
-			// Wait 3 seconds in between
-			time.Sleep(3 * time.Second)
+			// Wait 5 seconds in between
+			time.Sleep(5 * time.Second)
 
 			// Verify we shouldn't exit
 			select {

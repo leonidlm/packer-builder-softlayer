@@ -5,7 +5,7 @@ import (
 )
 
 func testConfig() map[string]interface{} {
-	return map[string]interface{} {
+	return map[string]interface{}{
 		"username":     "test",
 		"api_key":      "testkey",
 		"image_name":   "testimage",
@@ -28,7 +28,7 @@ func TestPrepare_ImageType(t *testing.T) {
 	}
 
 	// Verify standard images are supported
-	c["image_type"] = "standard" 
+	c["image_type"] = "standard"
 	if _, err := b.Prepare(c); err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -43,4 +43,3 @@ func TestPrepare_ImageType(t *testing.T) {
 		t.Fatal("Expected an error")
 	}
 }
-

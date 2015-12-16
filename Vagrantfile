@@ -62,7 +62,7 @@ echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "chef/ubuntu-12.04"
+  config.vm.box = "bento/ubuntu-12.04"
 
   config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src' 
 

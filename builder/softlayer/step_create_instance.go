@@ -2,9 +2,10 @@ package softlayer
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/packer"
-	"log"
 )
 
 type stepCreateInstance struct {
@@ -13,7 +14,7 @@ type stepCreateInstance struct {
 
 func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*SoftlayerClient)
-	config := state.Get("config").(config)
+	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
 	// The ssh_key_id can be empty if the user specified a private key
@@ -48,34 +49,35 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 
 	state.Put("instance_data", instanceData)
 	self.instanceId = instanceData["globalIdentifier"].(string)
-	ui.Say(fmt.Sprintf("Created instance, id: '%s'", instanceData["globalIdentifier"].(string)))
+	ui.Say(fmt.Sprintf("Instance created: %q", instanceData["globalIdentifier"].(string)))
 
 	return multistep.ActionContinue
 }
 
 func (self *stepCreateInstance) Cleanup(state multistep.StateBag) {
 	client := state.Get("client").(*SoftlayerClient)
-	config := state.Get("config").(config)
+	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
 
 	if self.instanceId == "" {
 		return
 	}
 
-	ui.Say("Waiting for the instance to have no active transactions before destroying it...")
+	ui.Say(fmt.Sprintf("Waiting for the instance %q to have no active transactions before destroying it...", self.instanceId))
 
 	// We should wait until the instance is up/have no transactions,
 	// since if the instance will have some assigned transactions the destroy API call will fail
 	err := client.waitForInstanceReady(self.instanceId, config.StateTimeout)
 	if err != nil {
-		log.Printf("Error destroying instance: %v", err.Error())
-		ui.Error(fmt.Sprintf("Error waiting for instance to become ACTIVE for instance (%s)", self.instanceId))
+		log.Printf("Error destroying instance %q: %s", self.instanceId, err.Error())
+		ui.Error(fmt.Sprintf("Error waiting for instance to become ACTIVE for instance %q", self.instanceId))
 	}
 
-	ui.Say("Destroying instance...")
+	ui.Say(fmt.Sprintf("Destroying instance %q...", self.instanceId))
 	err = client.DestroyInstance(self.instanceId)
 	if err != nil {
-		log.Printf("Error destroying instance: %v", err.Error())
-		ui.Error(fmt.Sprintf("Error cleaning up the instance. Please delete the instance (%s) manually", self.instanceId))
+		log.Printf("Error destroying instance %q: %s", self.instanceId, err)
+		ui.Error(fmt.Sprintf("Error cleaning up the instance. Please delete the instance %q manually", self.instanceId))
 	}
+	ui.Say(fmt.Sprintf("Instance %q destroyed", self.instanceId))
 }
