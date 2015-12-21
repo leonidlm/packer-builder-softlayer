@@ -1,5 +1,7 @@
 # SoftLayer Builder (for packer.io)
 
+[![Build Status](https://travis-ci.org/watson-platform/packer-builder-softlayer.svg?branch=master)](https://travis-ci.org/watson-platform/packer-builder-softlayer)
+
 The softlayer builder is able to create new images for use with SoftLayer. The builder takes a source image (identified by it's global ID or reference name), runs any provisioning necessary on the image after launching it, then snapshots it into a reusable image. This reusable image can then be used as the foundation of new servers that are launched within SoftLayer.
 
 The builder does not manage images. Once it creates an image, it is up to you to use it or delete it.
@@ -120,4 +122,3 @@ To run the unit tests, execute "go test ./..." from the root project directory.
 * Configure travis CI or any alternative to automatically test and build the code
 * Provide an easier way to install (with no need to compile from source)
 * Add an option to configure multiple disks for the instance
-

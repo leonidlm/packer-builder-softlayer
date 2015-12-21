@@ -1,0 +1,11 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.6.3
+  - 1.7
+  - tip
+
+matrix:
+  fast_finish: true
