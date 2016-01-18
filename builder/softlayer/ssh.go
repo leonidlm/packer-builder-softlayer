@@ -1,14 +1,13 @@
 package softlayer
 
 import (
-	"code.google.com/p/go.crypto/ssh"
 	"errors"
 	"fmt"
 	"github.com/mitchellh/multistep"
+	"golang.org/x/crypto/ssh"
 )
 
-func sshAddress(state multistep.StateBag) (string, error) {
-	config := state.Get("config").(config)
+func commHost(state multistep.StateBag) (string, error) {
 	client := state.Get("client").(*SoftlayerClient)
 	instance := state.Get("instance_data").(map[string]interface{})
 	instanceId := instance["globalIdentifier"].(string)
@@ -18,11 +17,11 @@ func sshAddress(state multistep.StateBag) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s:%d", ipAddress, config.SshPort), nil
+	return ipAddress, nil
 }
 
 func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
-	config := state.Get("config").(config)
+	config := state.Get("config").(Config)
 	privateKey := state.Get("ssh_private_key").(string)
 
 	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
@@ -31,7 +30,7 @@ func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
 	}
 
 	return &ssh.ClientConfig{
-		User: config.SshUserName,
+		User: config.Comm.SSHUsername,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},

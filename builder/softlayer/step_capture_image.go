@@ -12,7 +12,7 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 	client := state.Get("client").(*SoftlayerClient)
 	ui := state.Get("ui").(packer.Ui)
 	instance := state.Get("instance_data").(map[string]interface{})
-	config := state.Get("config").(config)
+	config := state.Get("config").(Config)
 	instanceId := instance["globalIdentifier"].(string)
 	var imageId string
 
