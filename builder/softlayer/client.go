@@ -308,8 +308,9 @@ func (self SoftlayerClient) DestroySshKey(keyId int64) error {
 	return err
 }
 
+// FIXME This should allow private/public to be configurable
 func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, error) {
-	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getPrimaryIpAddress.json", instanceId), "GET", nil)
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getPrimaryBackendIpAddress.json", instanceId), "GET", nil)
 	if err != nil {
 		return "", nil
 	}
