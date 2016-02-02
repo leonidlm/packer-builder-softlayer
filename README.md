@@ -99,6 +99,8 @@ The reference of available configuration options is listed below.
  * `ssh_timeout` (string) - The time to wait for SSH to become available before timing out. The format of this value is a duration such as "5s" or "5m". The default SSH timeout is "1m". Defaults to "15m"
  * `ssh_private_key_file` (string) - Use this ssh private key file instead of a generated ssh key pair for connecting to the instance.
  * `instance_state_timeout` (string) - The time to wait, as a duration string, for an instance or image snapshot to enter a desired state (such as "active") before timing out. The default state timeout is "25m"
+ * `private_network_only_flag` (bool) - Specifies whether or not the instance only has access to the private network. When true this flag specifies that a compute instance is to only have access to the private network. Defaults to false.
+
 
 As already stated above, a good way of reviewing the available options is by inspecting the output of the following API call:
 
