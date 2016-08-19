@@ -1,7 +1,6 @@
 package softlayer
 
 import (
-	"code.google.com/p/gosshold/ssh"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -10,6 +9,7 @@ import (
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/common/uuid"
 	"github.com/mitchellh/packer/packer"
+	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
 	"strings"
