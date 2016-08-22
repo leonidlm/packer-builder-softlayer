@@ -1,7 +1,7 @@
 package softlayer
 
 import (
-	"code.google.com/p/gosshold/ssh"
+	"golang.org/x/crypto/ssh"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
