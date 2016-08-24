@@ -30,18 +30,19 @@ type SoftLayerRequest struct {
 
 // Based on: http://sldn.softlayer.com/reference/datatypes/SoftLayer_Container_Virtual_Guest_Configuration/
 type InstanceType struct {
-	HostName             string `json:"hostname"`
-	Domain               string
-	Datacenter           string
-	Cpus                 int
-	Memory               int64
-	HourlyBillingFlag    bool
-	LocalDiskFlag        bool
-	DiskCapacity         int
-	NetworkSpeed         int
-	ProvisioningSshKeyId int64
-	BaseImageId          string
-	BaseOsCode           string
+	HostName              string `json:"hostname"`
+	Domain                string
+	Datacenter            string
+	Cpus                  int
+	Memory                int64
+	HourlyBillingFlag     bool
+	LocalDiskFlag         bool
+	DiskCapacity          int
+	SecondaryDiskCapacity int
+	NetworkSpeed          int
+	ProvisioningSshKeyId  int64
+	BaseImageId           string
+	BaseOsCode            string
 }
 
 type InstanceReq struct {
@@ -192,10 +193,10 @@ func (self SoftlayerClient) doHttpRequest(path string, requestType string, reque
 			return nil, err
 		}
 
-		return []interface{} {v,}, nil
+		return []interface{}{v}, nil
 
 	case nil:
-		return []interface{} {nil,}, nil	
+		return []interface{}{nil}, nil
 	default:
 		return nil, errors.New("Unexpected type in HTTP response")
 	}
@@ -243,13 +244,30 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		}
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
-		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
-				Device: "0",
-				DiskImage: &DiskImage{
-					Capacity: instance.DiskCapacity,
+		if instance.SecondaryDiskCapacity == 0 {
+			instanceRequest.BlockDevices = []*BlockDevice{
+				&BlockDevice{
+					Device: "0",
+					DiskImage: &DiskImage{
+						Capacity: instance.DiskCapacity,
+					},
 				},
-			},
+			}
+		} else {
+			instanceRequest.BlockDevices = []*BlockDevice{
+				&BlockDevice{
+					Device: "0",
+					DiskImage: &DiskImage{
+						Capacity: instance.DiskCapacity,
+					},
+				},
+				&BlockDevice{
+					Device: "2",
+					DiskImage: &DiskImage{
+						Capacity: instance.SecondaryDiskCapacity,
+					},
+				},
+			}
 		}
 	}
 
@@ -329,7 +347,7 @@ func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, e
 	return data, nil
 }
 
-func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) ([]int64) {
+func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) []int64 {
 	blockDeviceIds := make([]int64, len(blockDevices))
 	deviceCount := 0
 
@@ -378,9 +396,8 @@ func (self SoftlayerClient) findImageIdByName(imageName string) (string, error) 
 		return "", err
 	}
 
-	return imageId, nil;
+	return imageId, nil
 }
-
 
 func (self SoftlayerClient) captureStandardImage(instanceId string, imageName string, imageDescription string, blockDeviceIds []int64) (map[string]interface{}, error) {
 	blockDevices := make([]*BlockDevice, len(blockDeviceIds))

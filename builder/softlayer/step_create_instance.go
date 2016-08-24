@@ -2,9 +2,10 @@ package softlayer
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/packer"
-	"log"
 )
 
 type stepCreateInstance struct {
@@ -24,18 +25,19 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 	}
 
 	instanceDefinition := &InstanceType{
-		HostName:             config.InstanceName,
-		Domain:               config.InstanceDomain,
-		Datacenter:           config.DatacenterName,
-		Cpus:                 config.InstanceCpu,
-		Memory:               config.InstanceMemory,
-		HourlyBillingFlag:    true,
-		LocalDiskFlag:        true,
-		DiskCapacity:         config.InstanceDiskCapacity,
-		NetworkSpeed:         config.InstanceNetworkSpeed,
-		ProvisioningSshKeyId: ProvisioningSshKeyId,
-		BaseImageId:          config.BaseImageId,
-		BaseOsCode:           config.BaseOsCode,
+		HostName:              config.InstanceName,
+		Domain:                config.InstanceDomain,
+		Datacenter:            config.DatacenterName,
+		Cpus:                  config.InstanceCpu,
+		Memory:                config.InstanceMemory,
+		HourlyBillingFlag:     true,
+		LocalDiskFlag:         true,
+		DiskCapacity:          config.InstanceDiskCapacity,
+		SecondaryDiskCapacity: config.InstanceSecondaryDiskCapacity,
+		NetworkSpeed:          config.InstanceNetworkSpeed,
+		ProvisioningSshKeyId:  ProvisioningSshKeyId,
+		BaseImageId:           config.BaseImageId,
+		BaseOsCode:            config.BaseOsCode,
 	}
 
 	ui.Say("Creating an instance...")
