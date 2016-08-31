@@ -3,15 +3,16 @@ package softlayer
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/common"
 	"github.com/mitchellh/packer/helper/communicator"
 	"github.com/mitchellh/packer/helper/config"
 	"github.com/mitchellh/packer/packer"
 	"github.com/mitchellh/packer/template/interpolate"
-	"log"
-	"os"
-	"time"
 )
 
 // The unique ID for this builder.
@@ -30,12 +31,13 @@ type Config struct {
 	BaseImageId      string `mapstructure:"base_image_id"`
 	BaseOsCode       string `mapstructure:"base_os_code"`
 
-	InstanceName         string `mapstructure:"instance_name"`
-	InstanceDomain       string `mapstructure:"instance_domain"`
-	InstanceCpu          int    `mapstructure:"instance_cpu"`
-	InstanceMemory       int64  `mapstructure:"instance_memory"`
-	InstanceNetworkSpeed int    `mapstructure:"instance_network_speed"`
-	InstanceDiskCapacity int    `mapstructure:"instance_disk_capacity"`
+	InstanceName                  string `mapstructure:"instance_name"`
+	InstanceDomain                string `mapstructure:"instance_domain"`
+	InstanceCpu                   int    `mapstructure:"instance_cpu"`
+	InstanceMemory                int64  `mapstructure:"instance_memory"`
+	InstanceNetworkSpeed          int    `mapstructure:"instance_network_speed"`
+	InstanceDiskCapacity          int    `mapstructure:"instance_disk_capacity"`
+	InstanceSecondaryDiskCapacity int    `mapstructure:"instance_secondary_disk_capacity"`
 
 	RawStateTimeout string `mapstructure:"instance_state_timeout"`
 	StateTimeout    time.Duration
