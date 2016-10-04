@@ -12,3 +12,6 @@ cache:
 install:
   - go get github.com/Masterminds/glide
   - glide install --strip-vendor
+
+script:
+  - go test -v $(glide novendor)
