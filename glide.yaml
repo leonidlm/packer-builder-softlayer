@@ -1,4 +1,4 @@
-package: github.com/leonidlm/packer-builder-softlayer
+package: github.com/watson-platform/packer-builder-softlayer
 import:
 - package: github.com/mitchellh/multistep
 - package: github.com/mitchellh/packer

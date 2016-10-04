@@ -10,7 +10,7 @@ VM_GUI=false
 
 GOROOT = '/opt/go'
 GOPATH = '/opt/gopath'
-PACKAGE_PATH = 'src/github.com/leonidlm/packer-builder-softlayer'
+PACKAGE_PATH = 'src/github.com/watson-platform/packer-builder-softlayer'
 
 script = <<SCRIPT
 SRCROOT="#{GOROOT}"

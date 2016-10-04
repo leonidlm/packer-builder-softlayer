@@ -12,11 +12,11 @@ Download the Packer binaries [here](https://www.packer.io/downloads.html) or bui
 
 Install [glide](https://github.com/Masterminds/glide#install)
 
-Next, clone this repository into `$GOPATH/src/github.com/leonidlm/packer-builder-softlayer`. Then build the packer-softlayer-builder binary into the same folder as the packer binaries:
+Next, clone this repository into `$GOPATH/src/github.com/watson-platform/packer-builder-softlayer`. Then build the packer-softlayer-builder binary into the same folder as the packer binaries:
 
 ```
-cd $GOPATH/src/github.com/leonidlm/packer-builder-softlayer
-glide update --strip-vendor
+cd $GOPATH/src/github.com/watson-platform/packer-builder-softlayer
+glide install --strip-vendor
 go build -o /usr/local/packer/packer-builder-softlayer main.go
 ```
 
@@ -109,7 +109,7 @@ As already stated above, a good way of reviewing the available options is by ins
 ## Contribute
 
 New contributors are always welcome!
-When in doubt please feel free to ask questions, just [Create an issue](https://github.com/leonidlm/packer-builder-softlayer/issues/new) with your enquiries.
+When in doubt please feel free to ask questions, just [Create an issue](https://github.com/watson-platform/packer-builder-softlayer/issues/new) with your enquiries.
 
 ### Development Environment
 
