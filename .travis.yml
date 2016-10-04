@@ -1,0 +1,17 @@
+language: go
+
+go:
+  - 1.6.3
+  - 1.7
+  - tip
+
+cache:
+  directories:
+  - $HOME/.glide
+
+install:
+  - go get github.com/Masterminds/glide
+  - glide install --strip-vendor
+
+script:
+  - go test -v $(glide novendor)
