@@ -8,10 +8,13 @@ The builder does not manage images. Once it creates an image, it is up to you to
 
 Download the Packer binaries [here](https://www.packer.io/downloads.html) or build Packer from source as described [here](https://github.com/mitchellh/packer#developing-packer).
 
+Install [glide](https://github.com/Masterminds/glide#install)
+
 Next, clone this repository into `$GOPATH/src/github.com/leonidlm/packer-builder-softlayer`. Then build the packer-softlayer-builder binary into the same folder as the packer binaries:
 
 ```
 cd $GOPATH/src/github.com/leonidlm/packer-builder-softlayer
+glide update --strip-vendor
 go build -o /usr/local/packer/packer-builder-softlayer main.go
 ```
 
