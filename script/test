@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# Runs all tests.
+
+set -euo pipefail
+source "$(dirname "$0")/utilities.bash"
+
+header "Tests"
+govendor test -race -v +local
+
+# vim: set ft=sh :

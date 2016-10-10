@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# Sets up all the dependencies, etc. so you can build and test.
+
+set -euo pipefail
+source "$(dirname "$0")/utilities.bash"
+
+header "Building Container gc:devel"
+docker build --pull --tag=gc:devel .
+
+# vim: set ft=sh :
