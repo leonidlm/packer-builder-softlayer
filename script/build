@@ -27,7 +27,6 @@ if [[ "$osarch" == *all* ]]; then
   osarches=(
     darwin/amd64
     linux/amd64
-    linux/ppc64le
   )
 
   header "Building all binaries"

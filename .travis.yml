@@ -26,7 +26,6 @@ deploy:
     - checksums.sha256
     - ${RELEASE_NAME}_darwin_amd64
     - ${RELEASE_NAME}_linux_amd64
-    - ${RELEASE_NAME}_linux_ppc64le
   on:
     tags: true
 
