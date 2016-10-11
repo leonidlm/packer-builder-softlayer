@@ -1,17 +1,33 @@
 language: go
-
 go:
-  - 1.6.3
-  - 1.7
-  - tip
-
+- 1.6.3
+- 1.7
+- tip
 cache:
   directories:
-  - $HOME/.glide
-
+  - "$HOME/.glide"
 install:
-  - go get github.com/Masterminds/glide
-  - glide install --strip-vendor
-
+- ./script/bootstrap -u
+- go get github.com/Masterminds/glide
+- glide install --strip-vendor
 script:
-  - go test -v $(glide novendor)
+- go test -v $(glide novendor)
+env:
+  global:
+    - RELEASE_NAME=packer-builder-softlayer
+before_deploy:
+  - ./script/build all
+  - sha256sum ${RELEASE_NAME}_* > checksums.sha256
+deploy:
+  provider: releases
+  api_key:
+    secure: i4Q45DjcQ2e8idcLyDwj2gKZx08Cya+uXl2KHU1UWfqIl5O1036l7VQFJENyTz9s0zUEEg74o2z+1rSDWvpEV+nu4IROV1BHp1Xm7FNM/zUeutUGf4Eiqh830kchsGittoHkXo/kXcGnhWwWrRh3MYaw5zVPVrKb7MjpGQrQGUi2o7cI6Rbm6iOHIh8/D1T71okH4GDb9UoC4q25jh2rjWeF11wwZ/iGAe5YcY/Ae1fIwlzX7IMAcoNpxxoNIJSHIW11KXDiHWKtm7cL8mhNTgcFyEY9emIejLloYmONaCcOaqYq/ClMfLAXFOC1LuBw+2+4YGuAWcfWpQ3p6OuQ+DYN7tauuye/Wvh5E9Jg6zdmTEnZlnmy+rE+k/Rfc1MomH4LwmD80WjeAM/LZiSalGBo6BRPi31YtYC1hEuZJswCl9qHYjAlvpFcE/i2altNgx1EWVD7LmYSF0BcTH4TAySgWOewv8B26gcJDoos95zik7/phGD5WDV6FxFPuDJW+d7M6/DnZ7i9Bz5QJmfNp1DZ45qBLVGxg+WMk/QJsChFlLkZFH1HlklsoKAshoZ+JzDRGNVmf8uogsDd1NEBsaWe4a+2TqSTYEhVuUjsKqpAlFRbZL+fjpS9SXE5XCypDvbA75qC+BFFUi+st7/XbVOnn8cUdK80mk8+ebbbrCA=
+  file:
+    - checksums.sha256
+    - ${RELEASE_NAME}_darwin_amd64
+    - ${RELEASE_NAME}_linux_amd64
+  on:
+    tags: true
+
+
+

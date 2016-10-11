@@ -1,0 +1,6 @@
+# EditorConfig: http://EditorConfig.org
+
+[*]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
