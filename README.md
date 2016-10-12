@@ -94,7 +94,7 @@ The reference of available configuration options is listed below.
  * `instance_cpu` (string) - The amount of CPUs assigned to the instance. Defaults to 1
  * `instance_memory` (string) - The amount of Memory (in bytes) assigned to the instance. Defaults to 1024
  * `instance_network_speed` (string) - The network uplink speed, in megabits per second, which will be assigned to the instance. Defaults to 10
- * `instance_disk_capacity` (string) - The amount of Disk capacity (in gigabytes) assigned to the instance. Defaults to 25
+ * `instance_disk_capacites` ([]int) - Array of disk capacities (in GB) corresponding to disk indexes (ie. [25,100] provisions disk 0 with 25 GB and disk 1 with 100 GB). Default: one disk with 25 GB
  * `ssh_port` (string) - The port that SSH will be available on. Defaults to port 22
  * `ssh_timeout` (string) - The time to wait for SSH to become available before timing out. The format of this value is a duration such as "5s" or "5m". The default SSH timeout is "1m". Defaults to "15m"
  * `ssh_private_key_file` (string) - Use this ssh private key file instead of a generated ssh key pair for connecting to the instance.

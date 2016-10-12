@@ -8,10 +8,8 @@ cache:
   - "$HOME/.glide"
 install:
 - ./script/bootstrap -u
-- go get github.com/Masterminds/glide
-- glide install --strip-vendor
 script:
-- go test -v $(glide novendor)
+- ./script/test
 env:
   global:
     - RELEASE_NAME=packer-builder-softlayer

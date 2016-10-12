@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"strconv"
 )
 
 const SOFTLAYER_API_URL = "api.softlayer.com/rest/v3"
@@ -38,7 +39,7 @@ type InstanceType struct {
 	HourlyBillingFlag      bool
 	LocalDiskFlag          bool
 	PrivateNetworkOnlyFlag bool
-	DiskCapacity           int
+	DiskCapacities         []int
 	NetworkSpeed           int
 	ProvisioningSshKeyId   int64
 	BaseImageId            string
@@ -246,13 +247,19 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		}
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
-		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
-				Device: "0",
+
+		for index, element := range instance.DiskCapacities {
+			var device string // device 1 is reserved for swap, so we need to skip that
+			if (index == 0) {
+			  device= "0"
+			} else {
+			  device= strconv.Itoa(index + 1)
+			}
+			instanceRequest.BlockDevices = append(instanceRequest.BlockDevices, &BlockDevice{
+				Device: device,
 				DiskImage: &DiskImage{
-					Capacity: instance.DiskCapacity,
-				},
-			},
+					Capacity: element,
+				}})
 		}
 	}
 

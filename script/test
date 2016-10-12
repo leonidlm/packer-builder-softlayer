@@ -1,11 +1,14 @@
 #!/bin/bash
 #
-# Runs all tests.
+# Runs all tests & lint.
 
 set -euo pipefail
 source "$(dirname "$0")/utilities.bash"
 
 header "Tests"
-govendor test -race -v +local
+go test $(glide novendor)
+
+header "Linter"
+gometalinter --deadline=1m --vendored-linters --vendor --disable=gotype
 
 # vim: set ft=sh :

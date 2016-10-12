@@ -9,10 +9,11 @@ header "Fetching utilites"
 go get "$@" -v \
   github.com/alecthomas/gometalinter \
   github.com/mitchellh/gox \
-  github.com/kardianos/govendor \
   github.com/wadey/gocovmerge \
-  github.com/pengwynn/flint
+  github.com/Masterminds/glide
 
+header "Installing dependencies with Glide"
+glide install --strip-vendor
 header "Installing gometalinter tools"
 gometalinter --install
 
