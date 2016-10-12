@@ -11,7 +11,15 @@ func commHost(state multistep.StateBag) (string, error) {
 	client := state.Get("client").(*SoftlayerClient)
 	instance := state.Get("instance_data").(map[string]interface{})
 	instanceId := instance["globalIdentifier"].(string)
-	ipAddress, err := client.getInstancePublicIp(instanceId)
+	config := state.Get("config").(Config)
+	privateNetworkFlag := config.PrivateNetworkOnlyFlag
+	var ipAddress string
+	var err error
+	if privateNetworkFlag == true {
+		ipAddress, err = client.getInstancePrivateIp(instanceId)
+	} else {
+		ipAddress, err = client.getInstancePublicIp(instanceId)
+	}
 	if err != nil {
 		err := errors.New(fmt.Sprintf("Failed to fetch Public IP address for instance '%s'", instanceId))
 		return "", err

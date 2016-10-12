@@ -21,24 +21,25 @@ type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 	Comm                communicator.Config `mapstructure:",squash"`
 
-	Username         string `mapstructure:"username"`
-	APIKey           string `mapstructure:"api_key"`
-	DatacenterName   string `mapstructure:"datacenter_name"`
-	ImageName        string `mapstructure:"image_name"`
-	ImageDescription string `mapstructure:"image_description"`
-	ImageType        string `mapstructure:"image_type"`
-	BaseImageId      string `mapstructure:"base_image_id"`
-	BaseOsCode       string `mapstructure:"base_os_code"`
+	Username               string `mapstructure:"username"`
+	APIKey                 string `mapstructure:"api_key"`
+	DatacenterName         string `mapstructure:"datacenter_name"`
+	ImageName              string `mapstructure:"image_name"`
+	ImageDescription       string `mapstructure:"image_description"`
+	ImageType              string `mapstructure:"image_type"`
+	BaseImageId            string `mapstructure:"base_image_id"`
+	BaseOsCode             string `mapstructure:"base_os_code"`
+	PrivateNetworkOnlyFlag bool   `mapstructure:"private_network_only_flag"`
 
-	InstanceName         string `mapstructure:"instance_name"`
-	InstanceDomain       string `mapstructure:"instance_domain"`
-	InstanceCpu          int    `mapstructure:"instance_cpu"`
-	InstanceMemory       int64  `mapstructure:"instance_memory"`
-	InstanceNetworkSpeed int    `mapstructure:"instance_network_speed"`
-	InstanceDiskCapacity int    `mapstructure:"instance_disk_capacity"`
+	InstanceName           string `mapstructure:"instance_name"`
+	InstanceDomain         string `mapstructure:"instance_domain"`
+	InstanceCpu            int    `mapstructure:"instance_cpu"`
+	InstanceMemory         int64  `mapstructure:"instance_memory"`
+	InstanceNetworkSpeed   int    `mapstructure:"instance_network_speed"`
+	InstanceDiskCapacities []int  `mapstructure:"instance_disk_capacities"`
 
-	RawStateTimeout string `mapstructure:"instance_state_timeout"`
-	StateTimeout    time.Duration
+	RawStateTimeout        string `mapstructure:"instance_state_timeout"`
+	StateTimeout           time.Duration
 
 	ctx interpolate.Context
 }
@@ -107,8 +108,8 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 		self.config.InstanceNetworkSpeed = 10
 	}
 
-	if self.config.InstanceDiskCapacity == 0 {
-		self.config.InstanceDiskCapacity = 25
+	if self.config.InstanceDiskCapacities == nil {
+		self.config.InstanceDiskCapacities = []int{25}
 	}
 
 	if self.config.Comm.SSHUsername == "" {

@@ -1,5 +1,7 @@
 # SoftLayer Builder (for packer.io)
 
+[![Build Status](https://travis-ci.org/watson-platform/packer-builder-softlayer.svg?branch=master)](https://travis-ci.org/watson-platform/packer-builder-softlayer)
+
 The softlayer builder is able to create new images for use with SoftLayer. The builder takes a source image (identified by it's global ID or reference name), runs any provisioning necessary on the image after launching it, then snapshots it into a reusable image. This reusable image can then be used as the foundation of new servers that are launched within SoftLayer.
 
 The builder does not manage images. Once it creates an image, it is up to you to use it or delete it.
@@ -8,10 +10,13 @@ The builder does not manage images. Once it creates an image, it is up to you to
 
 Download the Packer binaries [here](https://www.packer.io/downloads.html) or build Packer from source as described [here](https://github.com/mitchellh/packer#developing-packer).
 
-Next, clone this repository into `$GOPATH/src/github.com/leonidlm/packer-builder-softlayer`. Then build the packer-softlayer-builder binary into the same folder as the packer binaries:
+Install [glide](https://github.com/Masterminds/glide#install)
+
+Next, clone this repository into `$GOPATH/src/github.com/watson-platform/packer-builder-softlayer`. Then build the packer-softlayer-builder binary into the same folder as the packer binaries:
 
 ```
-cd $GOPATH/src/github.com/leonidlm/packer-builder-softlayer
+cd $GOPATH/src/github.com/watson-platform/packer-builder-softlayer
+glide install --strip-vendor
 go build -o /usr/local/packer/packer-builder-softlayer main.go
 ```
 
@@ -89,11 +94,13 @@ The reference of available configuration options is listed below.
  * `instance_cpu` (string) - The amount of CPUs assigned to the instance. Defaults to 1
  * `instance_memory` (string) - The amount of Memory (in bytes) assigned to the instance. Defaults to 1024
  * `instance_network_speed` (string) - The network uplink speed, in megabits per second, which will be assigned to the instance. Defaults to 10
- * `instance_disk_capacity` (string) - The amount of Disk capacity (in gigabytes) assigned to the instance. Defaults to 25
+ * `instance_disk_capacites` ([]int) - Array of disk capacities (in GB) corresponding to disk indexes (ie. [25,100] provisions disk 0 with 25gb and disk 1 with 100gb). Defaults to 25
  * `ssh_port` (string) - The port that SSH will be available on. Defaults to port 22
  * `ssh_timeout` (string) - The time to wait for SSH to become available before timing out. The format of this value is a duration such as "5s" or "5m". The default SSH timeout is "1m". Defaults to "15m"
  * `ssh_private_key_file` (string) - Use this ssh private key file instead of a generated ssh key pair for connecting to the instance.
  * `instance_state_timeout` (string) - The time to wait, as a duration string, for an instance or image snapshot to enter a desired state (such as "active") before timing out. The default state timeout is "25m"
+ * `private_network_only_flag` (bool) - Specifies whether or not the instance only has access to the private network. When true this flag specifies that a compute instance is to only have access to the private network. Defaults to false.
+
 
 As already stated above, a good way of reviewing the available options is by inspecting the output of the following API call:
 
@@ -104,7 +111,7 @@ As already stated above, a good way of reviewing the available options is by ins
 ## Contribute
 
 New contributors are always welcome!
-When in doubt please feel free to ask questions, just [Create an issue](https://github.com/leonidlm/packer-builder-softlayer/issues/new) with your enquiries.
+When in doubt please feel free to ask questions, just [Create an issue](https://github.com/watson-platform/packer-builder-softlayer/issues/new) with your enquiries.
 
 ### Development Environment
 
@@ -117,4 +124,3 @@ To run the unit tests, execute "go test ./..." from the root project directory.
 * Configure travis CI or any alternative to automatically test and build the code
 * Provide an easier way to install (with no need to compile from source)
 * Add an option to configure multiple disks for the instance
-
