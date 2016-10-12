@@ -38,7 +38,7 @@ type InstanceType struct {
 	HourlyBillingFlag      bool
 	LocalDiskFlag          bool
 	PrivateNetworkOnlyFlag bool
-	DiskCapacity           int
+	DiskCapacities         []int
 	NetworkSpeed           int
 	ProvisioningSshKeyId   int64
 	BaseImageId            string
@@ -246,13 +246,20 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		}
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
-		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
-				Device: "0",
+
+		instanceRequest.BlockDevices = []*BlockDevice{}
+
+		for index, element := range instance.DiskCapacities {
+			var realIndex interface{} = index // deviceIndex 0 is reserved for swap, need to workaround that
+			if (index != 0) {
+				realIndex = index+1
+			}
+			realIndex = fmt.Sprintf("%v", realIndex)
+			instanceRequest.BlockDevices = append(instanceRequest.BlockDevices, &BlockDevice{
+				Device: realIndex.(string),
 				DiskImage: &DiskImage{
-					Capacity: instance.DiskCapacity,
-				},
-			},
+					Capacity: element,
+				}})
 		}
 	}
 
