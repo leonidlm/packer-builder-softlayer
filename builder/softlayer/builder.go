@@ -63,6 +63,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	if err != nil {
 		return nil, err
 	}
+	self.config.tpl.UserVars = self.config.PackerUserVars
 
 	// Assign default values if possible
 	if self.config.APIKey == "" {
