@@ -361,7 +361,9 @@ func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}
 		name := diskImage["name"].(string)
 		id := int64(blockDevice["id"].(float64))
 
-		if !strings.Contains(name, "SWAP") {
+		// Skip both SWAP and METADATA devices
+		// Reference - https://github.com/softlayer/softlayer-python/pull/776
+		if ( !strings.Contains(name, "SWAP") && !strings.Contains(name, "METADATA") ) {
 			blockDeviceIds[deviceCount] = id
 			deviceCount++
 		}
