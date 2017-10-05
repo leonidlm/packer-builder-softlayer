@@ -9,6 +9,6 @@ header "Tests"
 go test $(glide novendor)
 
 header "Linter"
-gometalinter --deadline=1m --vendored-linters --vendor --disable=gotype
+gometalinter --deadline=2m --vendored-linters --vendor --disable=gotype
 
 # vim: set ft=sh :
