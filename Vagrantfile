@@ -49,14 +49,16 @@ export GOPATH="#{GOPATH}"
 export PATH="#{GOPATH}/bin:\$PATH"
 EOT
   chmod 755 /etc/profile.d/gopath.sh
-  /etc/profile.d/gopath.sh
 fi
 
+source /etc/profile.d/gopath.sh
+
+
 # Install some other stuff we need
-sudo apt-get install -y curl git-core zip
+sudo apt-get update && sudo apt-get install -y curl git-core zip build-essential
 
 # Download and build Packer
-go get -u github.com/hashicorp/gox
+go get -u github.com/mitchellh/gox
 gox -build-toolchain
 go get -d -u github.com/hashicorp/packer
 cd $GOPATH/src/github.com/hashicorp/packer
