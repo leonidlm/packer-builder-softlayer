@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-# Original version of this file copied from: https://raw.githubusercontent.com/mitchellh/packer/master/Vagrantfile
+# Original version of this file copied from: https://raw.githubusercontent.com/hashicorp/packer/master/Vagrantfile
 #
 
 # VM Specifications
@@ -30,7 +30,8 @@ sudo chown -R root:root /usr/local/go
 
 # Ensure that the GOPATH tree is owned by vagrant:vagrant
 mkdir -p #{GOPATH}
-chown -R vagrant:vagrant #{GOPATH}
+sudo chown -R vagrant:vagrant #{GOPATH}
+sudo chown -R -f vagrant:vagrant $SRCROOT
 
 # Ensure Go is on PATH
 if [ ! -e /usr/bin/go ] ; then
@@ -48,14 +49,14 @@ export GOPATH="#{GOPATH}"
 export PATH="#{GOPATH}/bin:\$PATH"
 EOT
   chmod 755 /etc/profile.d/gopath.sh
+  /etc/profile.d/gopath.sh
 fi
 
 # Install some other stuff we need
 sudo apt-get install -y curl git-core zip
 
 # Download and build Packer
-export GOPATH="#{GOPATH}"
-go get -u github.com/mitchellh/gox
+go get -u github.com/hashicorp/gox
 gox -build-toolchain
 go get -d -u github.com/hashicorp/packer
 cd $GOPATH/src/github.com/hashicorp/packer
@@ -68,10 +69,6 @@ dep ensure
 go build
 go test ./...
 go install
-
-# Make sure the gopath is usable by vagrant
-sudo chown -R -f vagrant:vagrant $SRCROOT
-sudo chown -R -f vagrant:vagrant #{GOPATH}
 
 echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
