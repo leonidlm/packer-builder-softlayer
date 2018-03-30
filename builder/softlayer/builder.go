@@ -3,12 +3,12 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/helper/communicator"
-	"github.com/mitchellh/packer/helper/config"
-	"github.com/mitchellh/packer/packer"
-	"github.com/mitchellh/packer/template/interpolate"
+	"github.com/hashicorp/packer/common"
+	"github.com/hashicorp/packer/helper/communicator"
+	"github.com/hashicorp/packer/helper/config"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer/template/interpolate"
 	"log"
 	"os"
 	"time"
@@ -38,8 +38,8 @@ type Config struct {
 	InstanceNetworkSpeed   int    `mapstructure:"instance_network_speed"`
 	InstanceDiskCapacities []int  `mapstructure:"instance_disk_capacities"`
 
-	RawStateTimeout        string `mapstructure:"instance_state_timeout"`
-	StateTimeout           time.Duration
+	RawStateTimeout string `mapstructure:"instance_state_timeout"`
+	StateTimeout    time.Duration
 
 	ctx interpolate.Context
 }

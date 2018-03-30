@@ -20,13 +20,20 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-
 [[constraint]]
-  name = "github.com/mitchellh/multistep"
-
-[[constraint]]
-  name = "github.com/mitchellh/packer"
-  version = "0.10.2"
+  name = "github.com/hashicorp/packer"
 
 [[constraint]]
   name = "golang.org/x/crypto"
+
+[[override]]
+  name = "github.com/masterzen/winrm"
+  revision = "a2df6b1315e6fd5885eb15c67ed259e85854125f"
+
+[[override]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  revision = "26132835cbefa2669a306b777f34b929b56aa0a2"
+
+[[override]]
+  name = "github.com/masterzen/azure-sdk-for-go"
+  revision = "ee4f0065d00cd12b542f18f5bc45799e88163b12"

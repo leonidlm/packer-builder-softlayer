@@ -1,14 +1,15 @@
 package softlayer
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common/uuid"
-	"github.com/mitchellh/packer/packer"
+	"github.com/hashicorp/packer/common/uuid"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
 	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
@@ -20,7 +21,7 @@ type stepCreateSshKey struct {
 	PrivateKeyFile string
 }
 
-func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction {
+func (self *stepCreateSshKey) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	ui := state.Get("ui").(packer.Ui)
 	if self.PrivateKeyFile != "" {
 		ui.Say(fmt.Sprintf("Reading private key file (%s)...", self.PrivateKeyFile))
