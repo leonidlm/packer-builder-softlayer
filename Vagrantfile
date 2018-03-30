@@ -72,6 +72,9 @@ go build
 go test ./...
 go install
 
+# Ensure vagrant still owns the GOPATH
+sudo chown -R vagrant:vagrant #{GOPATH}
+
 echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
 SCRIPT
