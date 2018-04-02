@@ -1,4 +1,3 @@
-
 # Gopkg.toml example
 #
 # Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
@@ -17,23 +16,27 @@
 #   source = "github.com/myfork/project2"
 #
 # [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
+
 
 [[constraint]]
   name = "github.com/hashicorp/packer"
+  version = "1.2.2"
 
 [[constraint]]
+  name = "github.com/watson-platform/packer-builder-softlayer"
+  version = "1.0.1"
+
+[[constraint]]
+  branch = "master"
   name = "golang.org/x/crypto"
 
-[[override]]
-  name = "github.com/masterzen/winrm"
-  revision = "a2df6b1315e6fd5885eb15c67ed259e85854125f"
-
-[[override]]
-  name = "github.com/Azure/azure-sdk-for-go"
-  revision = "26132835cbefa2669a306b777f34b929b56aa0a2"
-
-[[override]]
-  name = "github.com/masterzen/azure-sdk-for-go"
-  revision = "ee4f0065d00cd12b542f18f5bc45799e88163b12"
+[prune]
+  go-tests = true
+  unused-packages = true
