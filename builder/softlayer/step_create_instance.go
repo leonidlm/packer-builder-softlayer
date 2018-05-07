@@ -1,9 +1,10 @@
 package softlayer
 
 import (
+	"context"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/packer"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
 	"log"
 )
 
@@ -11,7 +12,7 @@ type stepCreateInstance struct {
 	instanceId string
 }
 
-func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepAction {
+func (self *stepCreateInstance) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*SoftlayerClient)
 	config := state.Get("config").(Config)
 	ui := state.Get("ui").(packer.Ui)
@@ -24,18 +25,19 @@ func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepActi
 	}
 
 	instanceDefinition := &InstanceType{
-		HostName:             config.InstanceName,
-		Domain:               config.InstanceDomain,
-		Datacenter:           config.DatacenterName,
-		Cpus:                 config.InstanceCpu,
-		Memory:               config.InstanceMemory,
-		HourlyBillingFlag:    true,
-		LocalDiskFlag:        true,
-		DiskCapacity:         config.InstanceDiskCapacity,
-		NetworkSpeed:         config.InstanceNetworkSpeed,
-		ProvisioningSshKeyId: ProvisioningSshKeyId,
-		BaseImageId:          config.BaseImageId,
-		BaseOsCode:           config.BaseOsCode,
+		HostName:               config.InstanceName,
+		Domain:                 config.InstanceDomain,
+		Datacenter:             config.DatacenterName,
+		Cpus:                   config.InstanceCpu,
+		Memory:                 config.InstanceMemory,
+		HourlyBillingFlag:      true,
+		LocalDiskFlag:          true,
+		PrivateNetworkOnlyFlag: config.PrivateNetworkOnlyFlag,
+		DiskCapacities:         config.InstanceDiskCapacities,
+		NetworkSpeed:           config.InstanceNetworkSpeed,
+		ProvisioningSshKeyId:   ProvisioningSshKeyId,
+		BaseImageId:            config.BaseImageId,
+		BaseOsCode:             config.BaseOsCode,
 	}
 
 	ui.Say("Creating an instance...")

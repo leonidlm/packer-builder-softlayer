@@ -3,7 +3,7 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
+	"github.com/hashicorp/packer/helper/multistep"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -11,7 +11,15 @@ func commHost(state multistep.StateBag) (string, error) {
 	client := state.Get("client").(*SoftlayerClient)
 	instance := state.Get("instance_data").(map[string]interface{})
 	instanceId := instance["globalIdentifier"].(string)
-	ipAddress, err := client.getInstancePublicIp(instanceId)
+	config := state.Get("config").(Config)
+	privateNetworkFlag := config.PrivateNetworkOnlyFlag
+	var ipAddress string
+	var err error
+	if privateNetworkFlag == true {
+		ipAddress, err = client.getInstancePrivateIp(instanceId)
+	} else {
+		ipAddress, err = client.getInstancePublicIp(instanceId)
+	}
 	if err != nil {
 		err := errors.New(fmt.Sprintf("Failed to fetch Public IP address for instance '%s'", instanceId))
 		return "", err
@@ -34,5 +42,6 @@ func sshConfig(state multistep.StateBag) (*ssh.ClientConfig, error) {
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}, nil
 }

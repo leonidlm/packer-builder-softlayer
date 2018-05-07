@@ -3,12 +3,12 @@ package softlayer
 import (
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/helper/communicator"
-	"github.com/mitchellh/packer/helper/config"
-	"github.com/mitchellh/packer/packer"
-	"github.com/mitchellh/packer/template/interpolate"
+	"github.com/hashicorp/packer/common"
+	"github.com/hashicorp/packer/helper/communicator"
+	"github.com/hashicorp/packer/helper/config"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer/template/interpolate"
 	"log"
 	"os"
 	"time"
@@ -21,21 +21,22 @@ type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 	Comm                communicator.Config `mapstructure:",squash"`
 
-	Username         string `mapstructure:"username"`
-	APIKey           string `mapstructure:"api_key"`
-	DatacenterName   string `mapstructure:"datacenter_name"`
-	ImageName        string `mapstructure:"image_name"`
-	ImageDescription string `mapstructure:"image_description"`
-	ImageType        string `mapstructure:"image_type"`
-	BaseImageId      string `mapstructure:"base_image_id"`
-	BaseOsCode       string `mapstructure:"base_os_code"`
+	Username               string `mapstructure:"username"`
+	APIKey                 string `mapstructure:"api_key"`
+	DatacenterName         string `mapstructure:"datacenter_name"`
+	ImageName              string `mapstructure:"image_name"`
+	ImageDescription       string `mapstructure:"image_description"`
+	ImageType              string `mapstructure:"image_type"`
+	BaseImageId            string `mapstructure:"base_image_id"`
+	BaseOsCode             string `mapstructure:"base_os_code"`
+	PrivateNetworkOnlyFlag bool   `mapstructure:"private_network_only_flag"`
 
-	InstanceName         string `mapstructure:"instance_name"`
-	InstanceDomain       string `mapstructure:"instance_domain"`
-	InstanceCpu          int    `mapstructure:"instance_cpu"`
-	InstanceMemory       int64  `mapstructure:"instance_memory"`
-	InstanceNetworkSpeed int    `mapstructure:"instance_network_speed"`
-	InstanceDiskCapacity int    `mapstructure:"instance_disk_capacity"`
+	InstanceName           string `mapstructure:"instance_name"`
+	InstanceDomain         string `mapstructure:"instance_domain"`
+	InstanceCpu            int    `mapstructure:"instance_cpu"`
+	InstanceMemory         int64  `mapstructure:"instance_memory"`
+	InstanceNetworkSpeed   int    `mapstructure:"instance_network_speed"`
+	InstanceDiskCapacities []int  `mapstructure:"instance_disk_capacities"`
 
 	RawStateTimeout string `mapstructure:"instance_state_timeout"`
 	StateTimeout    time.Duration
@@ -107,8 +108,8 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 		self.config.InstanceNetworkSpeed = 10
 	}
 
-	if self.config.InstanceDiskCapacity == 0 {
-		self.config.InstanceDiskCapacity = 25
+	if len(self.config.InstanceDiskCapacities) == 0 {
+		self.config.InstanceDiskCapacities = []int{25}
 	}
 
 	if self.config.Comm.SSHUsername == "" {

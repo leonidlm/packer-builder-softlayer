@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"strconv"
 )
 
 const SOFTLAYER_API_URL = "api.softlayer.com/rest/v3"
@@ -30,18 +31,19 @@ type SoftLayerRequest struct {
 
 // Based on: http://sldn.softlayer.com/reference/datatypes/SoftLayer_Container_Virtual_Guest_Configuration/
 type InstanceType struct {
-	HostName             string `json:"hostname"`
-	Domain               string
-	Datacenter           string
-	Cpus                 int
-	Memory               int64
-	HourlyBillingFlag    bool
-	LocalDiskFlag        bool
-	DiskCapacity         int
-	NetworkSpeed         int
-	ProvisioningSshKeyId int64
-	BaseImageId          string
-	BaseOsCode           string
+	HostName               string `json:"hostname"`
+	Domain                 string
+	Datacenter             string
+	Cpus                   int
+	Memory                 int64
+	HourlyBillingFlag      bool
+	LocalDiskFlag          bool
+	PrivateNetworkOnlyFlag bool
+	DiskCapacities         []int
+	NetworkSpeed           int
+	ProvisioningSshKeyId   int64
+	BaseImageId            string
+	BaseOsCode             string
 }
 
 type InstanceReq struct {
@@ -52,6 +54,7 @@ type InstanceReq struct {
 	Memory                   int64                     `json:"maxMemory"`
 	HourlyBillingFlag        bool                      `json:"hourlyBillingFlag"`
 	LocalDiskFlag            bool                      `json:"localDiskFlag"`
+	PrivateNetworkOnlyFlag   bool                      `json:"privateNetworkOnlyFlag"`
 	NetworkComponents        []*NetworkComponent       `json:"networkComponents"`
 	BlockDeviceTemplateGroup *BlockDeviceTemplateGroup `json:"blockDeviceTemplateGroup,omitempty"`
 	BlockDevices             []*BlockDevice            `json:"blockDevices,omitempty"`
@@ -195,7 +198,7 @@ func (self SoftlayerClient) doHttpRequest(path string, requestType string, reque
 		return []interface{} {v,}, nil
 
 	case nil:
-		return []interface{} {nil,}, nil	
+		return []interface{} {nil,}, nil
 	default:
 		return nil, errors.New("Unexpected type in HTTP response")
 	}
@@ -221,6 +224,7 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		Cpus:              instance.Cpus,
 		Memory:            instance.Memory,
 		HourlyBillingFlag: true,
+		PrivateNetworkOnlyFlag: instance.PrivateNetworkOnlyFlag,
 		LocalDiskFlag:     false,
 		NetworkComponents: []*NetworkComponent{
 			&NetworkComponent{
@@ -243,13 +247,19 @@ func (self SoftlayerClient) CreateInstance(instance InstanceType) (map[string]in
 		}
 	} else {
 		instanceRequest.OsReferenceCode = instance.BaseOsCode
-		instanceRequest.BlockDevices = []*BlockDevice{
-			&BlockDevice{
-				Device: "0",
+
+		for index, element := range instance.DiskCapacities {
+			var device string // device 1 is reserved for swap, so we need to skip that
+			if (index == 0) {
+			  device= "0"
+			} else {
+			  device= strconv.Itoa(index + 1)
+			}
+			instanceRequest.BlockDevices = append(instanceRequest.BlockDevices, &BlockDevice{
+				Device: device,
 				DiskImage: &DiskImage{
-					Capacity: instance.DiskCapacity,
-				},
-			},
+					Capacity: element,
+				}})
 		}
 	}
 
@@ -320,6 +330,18 @@ func (self SoftlayerClient) getInstancePublicIp(instanceId string) (string, erro
 	return string(ipAddress), nil
 }
 
+func (self SoftlayerClient) getInstancePrivateIp(instanceId string) (string, error) {
+	response, err := self.doRawHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getPrimaryBackendIpAddress.json", instanceId), "GET", nil)
+	if err != nil {
+		return "", nil
+	}
+
+	var validIp = regexp.MustCompile(`[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}`)
+	ipAddress := validIp.Find(response)
+
+	return string(ipAddress), nil
+}
+
 func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, error) {
 	data, err := self.doHttpRequest(fmt.Sprintf("SoftLayer_Virtual_Guest/%s/getBlockDevices.json?objectMask=mask.diskImage.name", instanceId), "GET", nil)
 	if err != nil {
@@ -339,7 +361,9 @@ func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}
 		name := diskImage["name"].(string)
 		id := int64(blockDevice["id"].(float64))
 
-		if !strings.Contains(name, "SWAP") {
+		// Skip both SWAP and METADATA devices
+		// Reference - https://github.com/softlayer/softlayer-python/pull/776
+		if ( !strings.Contains(name, "SWAP") && !strings.Contains(name, "METADATA") ) {
 			blockDeviceIds[deviceCount] = id
 			deviceCount++
 		}

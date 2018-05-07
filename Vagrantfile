@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-# Original version of this file copied from: https://raw.githubusercontent.com/mitchellh/packer/master/Vagrantfile
+# Original version of this file copied from: https://raw.githubusercontent.com/hashicorp/packer/master/Vagrantfile
 #
 
 # VM Specifications
@@ -10,61 +10,79 @@ VM_GUI=false
 
 GOROOT = '/opt/go'
 GOPATH = '/opt/gopath'
-PACKAGE_PATH = 'src/github.com/leonidlm/packer-builder-softlayer'
+PACKAGE_PATH = 'src/github.com/watson-platform/packer-builder-softlayer'
+GO_VERSION = '1.9.2'
 
 script = <<SCRIPT
+set -x
+
 SRCROOT="#{GOROOT}"
 
 # Install Go
-sudo apt-get update
-sudo apt-get install -y build-essential mercurial
-sudo hg clone -u release https://code.google.com/p/go $SRCROOT
-cd ${SRCROOT}/src
-sudo ./all.bash
 
-# Setup the GOPATH
-sudo mkdir -p #{GOPATH}
-cat <<EOF >/tmp/gopath.sh
+download="https://storage.googleapis.com/golang/go#{GO_VERSION}.linux-amd64.tar.gz"
+
+wget -q -O /tmp/go.tar.gz ${download}
+
+tar -C /tmp -xf /tmp/go.tar.gz
+sudo mv /tmp/go /usr/local
+sudo chown -R root:root /usr/local/go
+
+# Ensure that the GOPATH tree is owned by vagrant:vagrant
+mkdir -p #{GOPATH}
+sudo chown -R vagrant:vagrant #{GOPATH}
+sudo chown -R -f vagrant:vagrant $SRCROOT
+
+# Ensure Go is on PATH
+if [ ! -e /usr/bin/go ] ; then
+  ln -s /usr/local/go/bin/go /usr/bin/go
+fi
+if [ ! -e /usr/bin/gofmt ] ; then
+  ln -s /usr/local/go/bin/gofmt /usr/bin/gofmt
+fi
+
+
+# Ensure new sessions know about GOPATH
+if [ ! -f /etc/profile.d/gopath.sh ] ; then
+  cat <<EOT > /etc/profile.d/gopath.sh
 export GOPATH="#{GOPATH}"
-export PATH="#{GOROOT}/bin:\\$GOPATH/bin:\\$PATH"
-export SL_USERNAME=#{ENV['SL_USERNAME']}
-export SL_API_KEY=#{ENV['SL_API_KEY']}
-EOF
-sudo mv /tmp/gopath.sh /etc/profile.d/gopath.sh
-sudo chmod 0755 /etc/profile.d/gopath.sh
+export PATH="#{GOPATH}/bin:\$PATH"
+EOT
+  chmod 755 /etc/profile.d/gopath.sh
+fi
+
+source /etc/profile.d/gopath.sh
+
 
 # Install some other stuff we need
-sudo apt-get install -y curl git-core zip
+sudo apt-get update && sudo apt-get install -y curl git-core zip build-essential
 
 # Download and build Packer
-source /etc/profile.d/gopath.sh
 go get -u github.com/mitchellh/gox
 gox -build-toolchain
-go get -d -u github.com/mitchellh/packer
-cd $GOPATH/src/github.com/mitchellh/packer
-make updatedeps
-# These next two lines cause duplicate files in $GOPATH/bin
+go get -d -u github.com/hashicorp/packer
+cd $GOPATH/src/github.com/hashicorp/packer
 make
-make dev
 
 # Build packer-builder-softlayer
 cd $GOPATH/#{PACKAGE_PATH}
+curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+dep ensure
 go build
 go test ./...
 go install
 
-# Make sure the gopath is usable by vagrant
-sudo chown -R -f vagrant:vagrant $SRCROOT
-sudo chown -R -f vagrant:vagrant #{GOPATH} 
+# Ensure vagrant still owns the GOPATH
+sudo chown -R vagrant:vagrant #{GOPATH}
 
 echo "Ready for development. Begin with cd $GOPATH/#{PACKAGE_PATH}"
 
 SCRIPT
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "chef/ubuntu-12.04"
+  config.vm.box = "ubuntu/trusty64"
 
-  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src' 
+  config.vm.synced_folder '.', "#{GOPATH}/#{PACKAGE_PATH}", id: 'src'
 
   config.vm.provision 'shell', inline: script
 

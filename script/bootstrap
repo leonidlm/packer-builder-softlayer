@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Sets up all the dependencies, etc. so you can build and test.
+
+set -euo pipefail
+source "$(dirname "$0")/utilities.bash"
+
+header "Fetching utilites"
+go get "$@" -v \
+  github.com/alecthomas/gometalinter \
+  github.com/mitchellh/gox \
+  github.com/wadey/gocovmerge \
+  github.com/golang/dep/cmd/dep
+
+header "Installing dependencies with Dep"
+dep ensure
+header "Installing gometalinter tools"
+gometalinter --install
+
+# vim: set ft=sh :
