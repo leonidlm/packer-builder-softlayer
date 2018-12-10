@@ -8,21 +8,21 @@ func TestClient_FindNonSwapBlockDeviceIds(t *testing.T) {
 	client := SoftlayerClient{}
 
 	result := client.findNonSwapBlockDeviceIds(
-		[]interface{} {
-			map[string]interface{} {
+		[]interface{}{
+			map[string]interface{}{
 				"device": "0",
-				"id": 11.,
-				"diskImage": map[string]interface{} {
+				"id":     11.,
+				"diskImage": map[string]interface{}{
 					"name": "root-device",
-					"id": 12.,
+					"id":   12.,
 				},
 			},
-			map[string]interface{} {
+			map[string]interface{}{
 				"device": "1",
-				"id": 21.,
-				"diskImage": map[string]interface{} {
+				"id":     21.,
+				"diskImage": map[string]interface{}{
 					"name": "SWAP-device",
-					"id": 22.,
+					"id":   22.,
 				},
 			},
 		})
@@ -33,24 +33,22 @@ func TestClient_FindNonSwapBlockDeviceIds(t *testing.T) {
 		t.Fatalf("Expected device id 11 but got %d", result[0])
 	}
 
-
-
 	result = client.findNonSwapBlockDeviceIds(
-		[]interface{} {
-			map[string]interface{} {
+		[]interface{}{
+			map[string]interface{}{
 				"device": "0",
-				"id": 11.,
-				"diskImage": map[string]interface{} {
+				"id":     11.,
+				"diskImage": map[string]interface{}{
 					"name": "first-SWAP-device",
-					"id": 12.,
+					"id":   12.,
 				},
 			},
-			map[string]interface{} {
+			map[string]interface{}{
 				"device": "1",
-				"id": 21.,
-				"diskImage": map[string]interface{} {
+				"id":     21.,
+				"diskImage": map[string]interface{}{
 					"name": "SWAP-device",
-					"id": 22.,
+					"id":   22.,
 				},
 			},
 		})
@@ -58,24 +56,22 @@ func TestClient_FindNonSwapBlockDeviceIds(t *testing.T) {
 		t.Fatalf("Expected no devices but got '%v'", result)
 	}
 
-
-
 	result = client.findNonSwapBlockDeviceIds(
-		[]interface{} {
-			map[string]interface{} {
+		[]interface{}{
+			map[string]interface{}{
 				"device": "0",
-				"id": 11.,
-				"diskImage": map[string]interface{} {
+				"id":     11.,
+				"diskImage": map[string]interface{}{
 					"name": "first-device",
-					"id": 12.,
+					"id":   12.,
 				},
 			},
-			map[string]interface{} {
+			map[string]interface{}{
 				"device": "1",
-				"id": 21.,
-				"diskImage": map[string]interface{} {
+				"id":     21.,
+				"diskImage": map[string]interface{}{
 					"name": "second-device",
-					"id": 22.,
+					"id":   22.,
 				},
 			},
 		})
@@ -86,4 +82,3 @@ func TestClient_FindNonSwapBlockDeviceIds(t *testing.T) {
 		t.Fatalf("Expected devices 11 and 21 but got %v", result)
 	}
 }
-

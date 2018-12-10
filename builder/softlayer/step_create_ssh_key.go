@@ -1,31 +1,34 @@
 package softlayer
 
 import (
-	"code.google.com/p/gosshold/ssh"
+	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common/uuid"
-	"github.com/mitchellh/packer/packer"
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"github.com/hashicorp/packer/common/uuid"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
+	"golang.org/x/crypto/ssh"
 )
 
 type stepCreateSshKey struct {
 	keyId          int64
-	PrivateKeyFile string
+	PrivateKeyFile []byte
 }
 
-func (self *stepCreateSshKey) Run(state multistep.StateBag) multistep.StepAction {
+func (self *stepCreateSshKey) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	ui := state.Get("ui").(packer.Ui)
-	if self.PrivateKeyFile != "" {
+	if bytes.Compare(self.PrivateKeyFile, []byte("")) != 0 {
 		ui.Say(fmt.Sprintf("Reading private key file (%s)...", self.PrivateKeyFile))
 
-		privateKeyBytes, err := ioutil.ReadFile(self.PrivateKeyFile)
+		privateKeyBytes, err := ioutil.ReadFile(string(self.PrivateKeyFile))
 		if err != nil {
 			state.Put("error", fmt.Errorf("Error loading configured private key file: %s", err))
 			return multistep.ActionHalt

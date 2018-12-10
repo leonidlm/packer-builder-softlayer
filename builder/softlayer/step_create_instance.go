@@ -1,17 +1,19 @@
 package softlayer
 
 import (
+	"context"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/packer"
 	"log"
+
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
 )
 
 type stepCreateInstance struct {
 	instanceId string
 }
 
-func (self *stepCreateInstance) Run(state multistep.StateBag) multistep.StepAction {
+func (self *stepCreateInstance) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*SoftlayerClient)
 	config := state.Get("config").(Config)
 	ui := state.Get("ui").(packer.Ui)

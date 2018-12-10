@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/hashicorp/packer/packer/plugin"
 	"github.com/leonidlm/packer-builder-softlayer/builder/softlayer"
-	"github.com/mitchellh/packer/packer/plugin"
 )
 
 func main() {
