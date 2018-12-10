@@ -169,7 +169,8 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	}
 	self.config.StateTimeout = stateTimeout
 
-	//log.Println(common.ScrubConfig(self.config, self.config.APIKey, self.config.Username))
+	packer.LogSecretFilter.Set(self.config.APIKey, self.config.Username)
+	log.Println(self.config)
 
 	if len(errs.Errors) > 0 {
 		retErr = errors.New(errs.Error())

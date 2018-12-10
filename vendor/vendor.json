@@ -592,11 +592,23 @@
 			"revisionTime": "2018-09-26T22:07:39Z"
 		},
 		{
+			"path": "golang.org/x/crypto/internal/chacha20",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/crypto/internal/subtle",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "MCeXr2RNeiG1XG6V+er1OR0qyeo=",
 			"origin": "github.com/hashicorp/packer/vendor/golang.org/x/crypto/md4",
 			"path": "golang.org/x/crypto/md4",
 			"revision": "c4782807de413356c6a7b65a337b5b04908d8db5",
 			"revisionTime": "2018-12-09T11:39:14Z"
+		},
+		{
+			"path": "golang.org/x/crypto/poly1305",
+			"revision": ""
 		},
 		{
 			"checksumSHA1": "comxRp9FBqgZMXW1ZJjxkGw9VwA=",

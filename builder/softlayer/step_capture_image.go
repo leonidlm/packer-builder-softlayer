@@ -31,7 +31,8 @@ func (self *stepCaptureImage) Run(ctx context.Context, state multistep.StateBag)
 			return multistep.ActionHalt
 		}
 
-		blockDeviceIds := client.findNonSwapBlockDeviceIds(blockDevices)
+		blockDeviceIds := client.findNonSwapAndMetadataBlockDeviceIds(blockDevices)
+
 		ui.Say(fmt.Sprintf("Will capture standard image using these block devices: %v", blockDeviceIds))
 
 		_, err = client.captureStandardImage(instanceId, config.ImageName, config.ImageDescription, blockDeviceIds)

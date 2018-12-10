@@ -329,7 +329,7 @@ func (self SoftlayerClient) getBlockDevices(instanceId string) ([]interface{}, e
 	return data, nil
 }
 
-func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}) []int64 {
+func (self SoftlayerClient) findNonSwapAndMetadataBlockDeviceIds(blockDevices []interface{}) []int64 {
 	blockDeviceIds := make([]int64, len(blockDevices))
 	deviceCount := 0
 
@@ -339,7 +339,7 @@ func (self SoftlayerClient) findNonSwapBlockDeviceIds(blockDevices []interface{}
 		name := diskImage["name"].(string)
 		id := int64(blockDevice["id"].(float64))
 
-		if !strings.Contains(name, "SWAP") {
+		if !strings.Contains(name, "SWAP") && !strings.Contains(name, "METADATA") {
 			blockDeviceIds[deviceCount] = id
 			deviceCount++
 		}
