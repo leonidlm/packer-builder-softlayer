@@ -1,17 +1,19 @@
 package softlayer
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/common"
-	"github.com/mitchellh/packer/helper/communicator"
-	"github.com/mitchellh/packer/helper/config"
-	"github.com/mitchellh/packer/packer"
-	"github.com/mitchellh/packer/template/interpolate"
 	"log"
 	"os"
 	"time"
+
+	"github.com/hashicorp/packer/common"
+	"github.com/hashicorp/packer/helper/communicator"
+	"github.com/hashicorp/packer/helper/config"
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer/template/interpolate"
 )
 
 // The unique ID for this builder.
@@ -154,7 +156,7 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 			errs, errors.New("please specify only one of base_image_id or base_os_code"))
 	}
 
-	if self.config.BaseImageId != "" && self.config.Comm.SSHPrivateKey == "" {
+	if self.config.BaseImageId != "" && bytes.Compare(self.config.Comm.SSHPrivateKey, []byte("")) == 0 {
 		errs = packer.MultiErrorAppend(
 			errs, errors.New("when using base_image_id, you must specify ssh_private_key_file "+
 				"since automatic ssh key config for custom images isn't supported by SoftLayer API"))
@@ -167,7 +169,8 @@ func (self *Builder) Prepare(raws ...interface{}) (parms []string, retErr error)
 	}
 	self.config.StateTimeout = stateTimeout
 
-	log.Println(common.ScrubConfig(self.config, self.config.APIKey, self.config.Username))
+	packer.LogSecretFilter.Set(self.config.APIKey, self.config.Username)
+	log.Println(self.config)
 
 	if len(errs.Errors) > 0 {
 		retErr = errors.New(errs.Error())

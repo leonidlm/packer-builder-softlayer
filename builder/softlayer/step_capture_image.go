@@ -1,14 +1,16 @@
 package softlayer
 
 import (
+	"context"
 	"fmt"
-	"github.com/mitchellh/multistep"
-	"github.com/mitchellh/packer/packer"
+
+	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
 )
 
 type stepCaptureImage struct{}
 
-func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction {
+func (self *stepCaptureImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*SoftlayerClient)
 	ui := state.Get("ui").(packer.Ui)
 	instance := state.Get("instance_data").(map[string]interface{})
@@ -29,7 +31,8 @@ func (self *stepCaptureImage) Run(state multistep.StateBag) multistep.StepAction
 			return multistep.ActionHalt
 		}
 
-		blockDeviceIds := client.findNonSwapBlockDeviceIds(blockDevices)
+		blockDeviceIds := client.findNonSwapAndMetadataBlockDeviceIds(blockDevices)
+
 		ui.Say(fmt.Sprintf("Will capture standard image using these block devices: %v", blockDeviceIds))
 
 		_, err = client.captureStandardImage(instanceId, config.ImageName, config.ImageDescription, blockDeviceIds)
